@@ -1,0 +1,37 @@
+# Organo - Visual Organization Chart Editor
+
+> Organo is a browser-based visual organization chart (organogram) editor built with React Flow. Users can create, edit, and export org charts using drag-and-drop.
+
+## Key Features
+
+- Drag-and-drop org chart creation with person nodes and org-unit nodes
+- Real-time canvas editing with auto-layout (Dagre algorithm)
+- Export to JSON tree (AWS Organizations compatible), flat CSV (Salesforce / Kaonavi compatible), standalone HTML, PNG, SVG, PDF
+- Dark / light theme toggle
+- Real-time search and node filtering
+- Edge reconnection and quick-create menu on drag-to-empty-space
+
+## Docs
+
+- [Full technical documentation](https://organo.pages.dev/llms-full.txt)
+
+## Tech Stack
+
+- React 19, TypeScript, Vite
+- React Flow (node-based canvas)
+- Zustand (state management)
+- Dagre (auto-layout)
+- Framer Motion (animations)
+- Zod (validation)
+- html-to-image + jsPDF (image/PDF export)
+
+## Data Model
+
+### Node Types
+- **person**: name, role, department, email, phone, employmentType, image, tags
+- **org-unit**: unitName, unitType (company/headquarters/bureau/department/division/section/unit/post), headPersonName, memberCount, description, tags
+
+### Export Formats
+- **JSON Tree**: Recursive parent-children hierarchy. Multiple roots supported.
+- **Flat CSV**: One row per node with computed Parent ID column. UTF-8 BOM for Excel compatibility.
+- **Standalone HTML**: Single-file, zero-dependency HTML with CSS family-tree layout. Print-ready.

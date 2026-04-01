@@ -1,0 +1,136 @@
+# Organo - Full Technical Documentation for LLMs
+
+## Overview
+
+Organo is a client-side single-page application (SPA) for creating and managing organizational charts. It runs entirely in the browser with no backend server. Data is stored in-memory via Zustand and can be exported to multiple formats.
+
+Deployed on Cloudflare Pages at https://organo.pages.dev/
+
+## Architecture
+
+```
+src/
+  App.tsx              — Root component: React Flow canvas + sidebar + toolbar
+  main.tsx             — Entry point: StrictMode + createRoot
+  store/
+    useOrgStore.ts     — Zustand store: nodes, edges, CRUD operations, layout
+    useThemeStore.ts   — Theme toggle (dark/light), persisted to localStorage
+  hooks/
+    useExport.ts       — Export orchestration: calls exportUtils, triggers downloads
+    useSearch.ts       — Full-text search across node data fields
+    useT.ts            — i18n translation hook
+  utils/
+    exportUtils.ts     — Pure functions: buildTreeJson, buildFlatCsv, buildStandaloneHtml
+    layout.ts          — Dagre auto-layout algorithm wrapper
+    nodeSize.ts        — Dynamic node dimension calculation
+    asciiFilter.ts     — Input sanitization
+  components/
+    nodes/OrgNode.tsx          — Custom React Flow node renderer (person + org-unit)
+    sidebar/Sidebar.tsx        — Right panel: node detail editor form
+    toolbar/Toolbar.tsx        — Top bar: search, theme toggle, layout, export buttons
+    export/ExportModal.tsx     — Modal: format selection (JSON/CSV/HTML/PNG/SVG/PDF)
+    context-menu/              — Right-click context menu on nodes
+    quick-menu/                — Quick node creation on drag-to-empty
+    canvas/FitViewOnLayout.tsx — Auto-fit viewport after layout changes
+  types/
+    index.ts           — TypeScript types: OrgNode, OrgEdge, OrgPersonData, OrgUnitData, NodeKind
+  i18n/                — Internationalization resources
+  schemas/             — Zod validation schemas for node data
+```
+
+## Data Model
+
+### NodeKind
+Two kinds: `"person"` and `"org-unit"`.
+
+### OrgPersonData
+| Field          | Type       | Description               |
+|----------------|------------|---------------------------|
+| kind           | "person"   | Discriminator             |
+| name           | string     | Full name                 |
+| role           | string     | Job title / position      |
+| department     | string     | Department name           |
+| email          | string     | Email address             |
+| phone          | string     | Phone number              |
+| employmentType | string     | full-time/part-time/contract/intern/advisor |
+| image          | string     | Avatar image URL          |
+| tags           | string[]   | Arbitrary labels          |
+
+### OrgUnitData
+| Field          | Type       | Description               |
+|----------------|------------|---------------------------|
+| kind           | "org-unit" | Discriminator             |
+| unitName       | string     | Organization unit name    |
+| unitType       | string     | company/headquarters/bureau/department/division/section/unit/post |
+| headPersonName | string     | Name of unit head         |
+| memberCount    | number     | Number of members         |
+| description    | string     | Unit description          |
+| tags           | string[]   | Arbitrary labels          |
+
+### Edges
+Edges represent parent-child reporting relationships. Source = parent, Target = child.
+
+## Export Formats
+
+### 1. JSON Tree Export
+- Function: `buildTreeJson(nodes, edges) → TreeNode[]`
+- Resolves edges into recursive parent-children hierarchy
+- Multiple root nodes (nodes without incoming edges) become top-level array elements
+- All node data fields are preserved in output
+- Filename pattern: `organogram_YYYYMMDD_HHMMSS.json`
+
+### 2. Flat CSV Export
+- Function: `buildFlatCsv(nodes, edges) → string`
+- One row per node, columns: ID, Parent ID, Kind, Name, Role/UnitType, Department, EmploymentType, Email, Phone, UnitType, HeadPersonName, MemberCount, Description, Tags
+- Parent ID computed from edges (target → source mapping)
+- RFC 4180 compliant: values with commas/quotes/newlines are properly escaped
+- UTF-8 BOM prefix (`\uFEFF`) for Excel compatibility
+- Filename pattern: `organogram_YYYYMMDD_HHMMSS.csv`
+
+### 3. Standalone HTML Export
+- Function: `buildStandaloneHtml(nodes, edges) → string`
+- Complete HTML document with inline CSS, zero external dependencies
+- Semantic markup: `<ul>/<li>` nested tree structure
+- CSS family-tree layout with Flexbox and pseudo-element connectors
+- Professional design: white background, blue/gray accents, print-ready
+- Japanese labels for employment types and unit types
+- Filename pattern: `organogram_YYYYMMDD_HHMMSS.html`
+
+### 4. Image Exports
+- PNG: 2x pixel ratio, dark background
+- SVG: Vector format, dark background
+- PDF: PNG rendered into jsPDF A4 landscape
+
+## State Management
+
+Uses Zustand with immutable update patterns:
+- `useOrgStore`: nodes[], edges[], selectedNodeId, contextMenu state, searchQuery
+- Operations: addNode, updateNode, deleteNode, onConnect, reconnectEdge, deleteEdge, autoLayout
+- `useThemeStore`: theme (dark/light), persisted to localStorage, applied via `data-theme` attribute
+
+## Technology Stack
+
+| Layer        | Technology                    |
+|--------------|-------------------------------|
+| Framework    | React 19.2 + TypeScript 6     |
+| Build        | Vite 8                        |
+| Canvas       | React Flow 11                 |
+| Layout       | Dagre (automatic tree layout) |
+| State        | Zustand 5                     |
+| Validation   | Zod 4                         |
+| Animation    | Framer Motion 12              |
+| Export       | html-to-image, jsPDF          |
+| Styling      | CSS custom properties + themes|
+| Hosting      | Cloudflare Pages              |
+
+## Interaction Patterns
+
+1. **Add Node**: Click toolbar button or drag edge to empty space → quick-create menu
+2. **Edit Node**: Click node → sidebar panel opens with form fields
+3. **Connect Nodes**: Drag from source handle to target handle
+4. **Reconnect Edge**: Drag existing edge endpoint to new target
+5. **Delete Edge**: Click on edge
+6. **Delete Node**: Right-click → context menu → delete (or Delete key)
+7. **Auto Layout**: Toolbar button triggers Dagre layout recalculation
+8. **Search**: Type in toolbar search box → non-matching nodes fade to 25% opacity
+9. **Export**: Toolbar export button → modal with format selection

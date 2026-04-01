@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── Dark theme (default) ─────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Canvas */
+  --bg:            #111113;
+  --bg-canvas-dot: #2A2A2E;
+
+  /* Surfaces */
+  --surface:       #1C1C1E;
+  --surface-2:     #2C2C2E;
+  --surface-3:     #3A3A3C;
+
+  /* Borders */
+  --border:        #3A3A3C;
+  --border-subtle: #2C2C2E;
+
+  /* Typography */
+  --text:          #F5F5F5;
+  --text-2:        #ADADB8;
+  --text-3:        #6E6E7A;
+
+  /* Primary accent – accessible blue (not neon) */
+  --accent:        #4A90D9;
+  --accent-bg:     rgba(74,144,217,0.12);
+  --accent-border: rgba(74,144,217,0.35);
+  --accent-text:   #93C5FD;
+
+  /* Semantic */
+  --danger:        #D95C5C;
+  --danger-bg:     rgba(217,92,92,0.12);
+  --danger-border: rgba(217,92,92,0.30);
+  --success:       #3DAA6B;
+  --success-bg:    rgba(61,170,107,0.12);
+  --warn:          #D48B2E;
+  --warn-bg:       rgba(212,139,46,0.12);
+
+  /* Toolbar / Sidebar panels */
+  --panel-bg:      rgba(28,28,30,0.97);
+  --panel-border:  #2C2C2E;
+
+  /* Nodes */
+  --node-bg:       #1C1C1E;
+  --node-bg-sel:   #1E2C3F;
+  --node-border:   #3A3A3C;
+  --node-sel:      #4A90D9;
+  --node-shadow:   0 2px 8px rgba(0,0,0,0.45);
+  --node-shadow-sel: 0 0 0 2px #4A90D9, 0 4px 16px rgba(74,144,217,0.20);
+  --node-bg-hover: #2a2a2e;
+  --node-shadow-hover: 0 6px 20px rgba(0,0,0,0.5);
+
+  /* Overlays */
+  --overlay:       rgba(0,0,0,0.55);
+  --shadow:        0 2px 8px rgba(0,0,0,0.40);
+  --shadow-lg:     0 12px 32px rgba(0,0,0,0.60);
+
+  /* Unit type accent colors */
+  --unit-company:      #7C83F0;  --unit-company-bg:  rgba(124,131,240,0.12);
+  --unit-hq:           #A47FE8;  --unit-hq-bg:       rgba(164,127,232,0.12);
+  --unit-bureau:       #2DC4B0;  --unit-bureau-bg:   rgba(45,196,176,0.12);
+  --unit-dept:         #5BA8F5;  --unit-dept-bg:     rgba(91,168,245,0.12);
+  --unit-division:     #3DB87A;  --unit-division-bg: rgba(61,184,122,0.12);
+  --unit-section:      #E8A83A;  --unit-section-bg:  rgba(232,168,58,0.12);
+  --unit-unit:         #E87B3A;  --unit-unit-bg:     rgba(232,123,58,0.12);
+  --unit-post:         #E06FA8;  --unit-post-bg:     rgba(224,111,168,0.12);
+}
+
+/* ── Light theme ──────────────────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:            #EDEDEF;
+  --bg-canvas-dot: #C8C8CE;
+
+  --surface:       #FFFFFF;
+  --surface-2:     #F5F5F7;
+  --surface-3:     #EAEAEC;
+
+  --border:        #D2D2D7;
+  --border-subtle: #E5E5EA;
+
+  --text:          #1A1A1C;
+  --text-2:        #505060;
+  --text-3:        #9090A0;
+
+  --accent:        #1A5FAA;
+  --accent-bg:     rgba(26,95,170,0.07);
+  --accent-border: rgba(26,95,170,0.28);
+  --accent-text:   #1A5FAA;
+
+  --danger:        #C03535;
+  --danger-bg:     rgba(192,53,53,0.07);
+  --danger-border: rgba(192,53,53,0.25);
+  --success:       #1A7A42;
+  --success-bg:    rgba(26,122,66,0.07);
+  --warn:          #A06020;
+  --warn-bg:       rgba(160,96,32,0.07);
+
+  --panel-bg:      rgba(255,255,255,0.97);
+  --panel-border:  #D2D2D7;
+
+  --node-bg:       #FFFFFF;
+  --node-bg-sel:   #EEF4FF;
+  --node-border:   #D2D2D7;
+  --node-sel:      #1A5FAA;
+  --node-shadow:   0 1px 4px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05);
+  --node-shadow-sel: 0 0 0 2px #1A5FAA, 0 4px 16px rgba(26,95,170,0.14);
+  --node-bg-hover: #f0f0f5;
+  --node-shadow-hover: 0 6px 20px rgba(0,0,0,0.15);
+
+  --overlay:       rgba(0,0,0,0.35);
+  --shadow:        0 1px 4px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-lg:     0 8px 24px rgba(0,0,0,0.12);
+
+  --unit-company:      #3730A3;  --unit-company-bg:  rgba(55,48,163,0.07);
+  --unit-hq:           #6020B0;  --unit-hq-bg:       rgba(96,32,176,0.07);
+  --unit-bureau:       #0A7A6E;  --unit-bureau-bg:   rgba(10,122,110,0.07);
+  --unit-dept:         #1A4EB0;  --unit-dept-bg:     rgba(26,78,176,0.07);
+  --unit-division:     #146638;  --unit-division-bg: rgba(20,102,56,0.07);
+  --unit-section:      #8A500A;  --unit-section-bg:  rgba(138,80,10,0.07);
+  --unit-unit:         #922E0A;  --unit-unit-bg:     rgba(146,46,10,0.07);
+  --unit-post:         #8E1060;  --unit-post-bg:     rgba(142,16,96,0.07);
+}
+
+/* ── Base reset ───────────────────────────────────────────────── */
+:root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root { width: 100%; }
+
+/* Form elements — fixed height/lineHeight prevents JA/EN size variance */
+input, select {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  height: 34px;
+  padding: 0 0.7rem;
+  line-height: 1;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.45rem 0.7rem;
+  line-height: 1.5;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+input::placeholder, textarea::placeholder { color: var(--text-3); }
+
+/* ReactFlow overrides */
+.react-flow__controls button {
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+  color: var(--text-2) !important;
+  fill: var(--text-2) !important;
+}
+.react-flow__controls button:hover {
+  background: var(--surface-3) !important;
+  color: var(--text) !important;
+  fill: var(--text) !important;
+}
+.react-flow__minimap {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Toolbar CSS tooltip */
+[data-tooltip] {
+  position: relative;
+}
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+}
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* Node card hover effect */
+.org-node-card {
+  transition: box-shadow 0.15s ease;
+}
+.org-node-card:hover {
+  box-shadow: var(--node-shadow-hover);
+}
