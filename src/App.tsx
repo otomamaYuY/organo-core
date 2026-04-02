@@ -10,6 +10,7 @@ import { Toolbar } from '@/components/toolbar/Toolbar'
 import { NodeContextMenu } from '@/components/context-menu/NodeContextMenu'
 import { QuickNodeCreationMenu } from '@/components/quick-menu/QuickNodeCreationMenu'
 import { FitViewOnLayout } from '@/components/canvas/FitViewOnLayout'
+import { ExportBridge } from '@/components/canvas/ExportBridge'
 import { EmptyState } from '@/components/canvas/EmptyState'
 import { useSearch } from '@/hooks/useSearch'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -199,6 +200,7 @@ export default function App() {
             <NodeContextMenu />
             <QuickNodeCreationMenu />
             <FitViewOnLayout />
+            <ExportBridge />
           </ReactFlow>
           {nodes.length === 0 && <EmptyState />}
           <Sidebar />

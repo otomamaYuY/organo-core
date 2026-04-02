@@ -214,6 +214,11 @@ function escHtml(s: string | undefined | null): string {
     .replace(/"/g, '&quot;')
 }
 
+/**
+ * Render a single node as a horizontal tree row.
+ * Uses <details> for click-to-reveal additional information.
+ * Layout: [card] ── [children stacked vertically to the right]
+ */
 function renderHtmlNode(
   node: OrgNode,
   childrenMap: Map<string, string[]>,
@@ -222,45 +227,66 @@ function renderHtmlNode(
 ): string {
   const d = node.data
   const childIds = childrenMap.get(node.id) ?? []
+  const hasChildren = childIds.length > 0
 
-  let cardHtml = ''
+  // Build the card summary (always visible) and detail (click to reveal)
+  let summaryLabel = ''
+  let detailHtml = ''
+
   if (d.kind === 'person') {
     const p = d as OrgPersonData
     const empLabel = p.employmentType
       ? (EMPLOYMENT_LABELS[p.employmentType] ?? p.employmentType)
       : ''
-    cardHtml = `
-      <div class="card person-card">
-        <div class="card-name">${escHtml(p.name)}</div>
-        <div class="card-role">${escHtml(p.role)}</div>
-        ${p.department ? `<div class="card-dept">${escHtml(p.department)}</div>` : ''}
-        ${empLabel ? `<span class="badge badge-emp">${escHtml(empLabel)}</span>` : ''}
-        ${p.email ? `<div class="card-meta">${escHtml(p.email)}</div>` : ''}
-        ${p.phone ? `<div class="card-meta">${escHtml(p.phone)}</div>` : ''}
-      </div>`
+    summaryLabel = escHtml(p.name)
+    if (p.role) summaryLabel += `<span class="card-role">${escHtml(p.role)}</span>`
+
+    const detailRows: string[] = []
+    if (p.department) detailRows.push(`<tr><th>部署</th><td>${escHtml(p.department)}</td></tr>`)
+    if (empLabel) detailRows.push(`<tr><th>雇用形態</th><td>${escHtml(empLabel)}</td></tr>`)
+    if (p.email) detailRows.push(`<tr><th>メール</th><td>${escHtml(p.email)}</td></tr>`)
+    if (p.phone) detailRows.push(`<tr><th>電話</th><td>${escHtml(p.phone)}</td></tr>`)
+    if (p.tags && p.tags.length > 0) {
+      detailRows.push(`<tr><th>タグ</th><td>${p.tags.map(t => escHtml(t)).join(', ')}</td></tr>`)
+    }
+    if (detailRows.length > 0) {
+      detailHtml = `<table class="detail-table">${detailRows.join('')}</table>`
+    }
   } else {
     const u = d as OrgUnitData
     const typeLabel = UNIT_TYPE_LABELS[u.unitType] ?? u.unitType
-    cardHtml = `
-      <div class="card unit-card">
-        <div class="card-name">${escHtml(u.unitName)}</div>
-        <span class="badge badge-unit">${escHtml(typeLabel)}</span>
-        ${u.headPersonName ? `<div class="card-role">長: ${escHtml(u.headPersonName)}</div>` : ''}
-        ${u.memberCount != null ? `<div class="card-meta">${u.memberCount} 名</div>` : ''}
-        ${u.description ? `<div class="card-desc">${escHtml(u.description)}</div>` : ''}
-      </div>`
+    summaryLabel = escHtml(u.unitName)
+    summaryLabel += `<span class="card-type">${escHtml(typeLabel)}</span>`
+
+    const detailRows: string[] = []
+    if (u.headPersonName) detailRows.push(`<tr><th>責任者</th><td>${escHtml(u.headPersonName)}</td></tr>`)
+    if (u.memberCount != null) detailRows.push(`<tr><th>人数</th><td>${u.memberCount} 名</td></tr>`)
+    if (u.description) detailRows.push(`<tr><th>説明</th><td>${escHtml(u.description)}</td></tr>`)
+    if (u.tags && u.tags.length > 0) {
+      detailRows.push(`<tr><th>タグ</th><td>${u.tags.map(t => escHtml(t)).join(', ')}</td></tr>`)
+    }
+    if (detailRows.length > 0) {
+      detailHtml = `<table class="detail-table">${detailRows.join('')}</table>`
+    }
   }
 
-  const childrenHtml =
-    childIds.length > 0
-      ? `<ul>${childIds
-          .map(id => nodeMap.get(id))
-          .filter((n): n is OrgNode => n !== undefined)
-          .map(n => renderHtmlNode(n, childrenMap, nodeMap, depth + 1))
-          .join('')}</ul>`
-      : ''
+  const kindClass = d.kind === 'person' ? 'node--person' : 'node--unit'
 
-  return `<li>${cardHtml}${childrenHtml}</li>`
+  // Build card HTML using <details> for interactivity
+  const cardInner = detailHtml
+    ? `<details class="card ${kindClass}"><summary class="card-summary">${summaryLabel}</summary>${detailHtml}</details>`
+    : `<div class="card ${kindClass}"><div class="card-summary">${summaryLabel}</div></div>`
+
+  // Build children
+  const childrenHtml = hasChildren
+    ? `<div class="children">${childIds
+        .map(id => nodeMap.get(id))
+        .filter((n): n is OrgNode => n !== undefined)
+        .map(n => renderHtmlNode(n, childrenMap, nodeMap, depth + 1))
+        .join('')}</div>`
+    : ''
+
+  return `<div class="row">${cardInner}${childrenHtml}</div>`
 }
 
 export function buildStandaloneHtml(nodes: OrgNode[], edges: OrgEdge[]): string {
@@ -276,10 +302,12 @@ export function buildStandaloneHtml(nodes: OrgNode[], edges: OrgEdge[]): string 
 
   const roots = nodes.filter(n => !hasParent.has(n.id))
   const bodyHtml = roots
-    .map(n => `<ul class="tree">${renderHtmlNode(n, childrenMap, nodeMap, 0)}</ul>`)
+    .map(n => renderHtmlNode(n, childrenMap, nodeMap, 0))
     .join('\n')
 
   const generatedAt = new Date().toLocaleString('ja-JP')
+  const personCount = nodes.filter(n => n.data.kind === 'person').length
+  const unitCount = nodes.filter(n => n.data.kind === 'org-unit').length
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -288,175 +316,253 @@ export function buildStandaloneHtml(nodes: OrgNode[], edges: OrgEdge[]): string 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>組織図</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Hiragino Sans', 'Meiryo', 'Yu Gothic', sans-serif;
+      font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif;
       font-size: 13px;
-      color: #1a1a1a;
+      line-height: 1.5;
+      color: #222;
       background: #fff;
-      padding: 32px 24px 48px;
     }
 
-    h1 {
+    /* ── Header ──────────────────────────────────────── */
+    .page-header {
+      border-bottom: 2px solid #222;
+      padding: 24px 32px 16px;
+    }
+    .page-title {
       font-size: 18px;
       font-weight: 700;
-      color: #1a1a1a;
-      margin-bottom: 4px;
+      letter-spacing: 1px;
     }
-    .meta {
+    .page-meta {
+      display: flex;
+      gap: 20px;
+      margin-top: 6px;
       font-size: 11px;
-      color: #888;
-      margin-bottom: 32px;
+      color: #666;
     }
 
-    /* ── CSS Family Tree ─────────────────────────── */
-    .tree, .tree ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0;
+    /* ── Chart Container ─────────────────────────────── */
+    .chart-wrap {
+      padding: 32px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
-    .tree li {
+    /* ── Horizontal Tree Layout ──────────────────────── */
+    /*
+     * Structure:
+     *   .row  = flex row: [card] → [children]
+     *   .children = vertical stack of child .rows
+     *
+     * Connector lines use ::before / ::after pseudo-elements
+     * to draw right-angle connectors from parent to children.
+     */
+    .row {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .children {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       position: relative;
-    }
-
-    /* Children are laid out horizontally */
-    .tree li > ul {
-      flex-direction: row;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 0;
-      padding-top: 24px;
       margin-left: 0;
     }
 
-    .tree li > ul > li {
-      padding: 0 16px;
+    .children > .row {
       position: relative;
+      padding-left: 32px;
     }
 
-    /* Vertical connector from parent card to horizontal bar */
-    .tree li > ul::before {
+    /* Horizontal connector from parent card to children column */
+    .children > .row::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 2px;
-      height: 16px;
-      background: #c8cdd6;
-    }
-
-    /* Horizontal bar connecting siblings */
-    .tree li > ul > li::before {
-      content: '';
-      position: absolute;
-      top: 0;
       left: 0;
-      right: 0;
-      height: 2px;
-      background: #c8cdd6;
+      top: 14px;
+      width: 32px;
+      height: 1.5px;
+      background: #555;
     }
 
-    .tree li > ul > li:first-child::before { left: 50%; }
-    .tree li > ul > li:last-child::before  { right: 50%; }
-    .tree li > ul > li:first-child:last-child::before { display: none; }
-
-    /* Vertical connector from horizontal bar to each child */
-    .tree li > ul > li::after {
+    /* Vertical line connecting siblings */
+    .children > .row::after {
       content: '';
       position: absolute;
+      left: 0;
       top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 2px;
-      height: 16px;
-      background: #c8cdd6;
+      width: 1.5px;
+      height: 100%;
+      background: #555;
     }
 
-    /* ── Cards ──────────────────────────────────── */
+    /* First child: vertical line starts from connector point */
+    .children > .row:first-child::after {
+      top: 14px;
+    }
+
+    /* Last child: vertical line ends at connector point */
+    .children > .row:last-child::after {
+      height: 15px;
+    }
+
+    /* Only child: no vertical line needed */
+    .children > .row:first-child:last-child::after {
+      display: none;
+    }
+
+    /* ── Cards ────────────────────────────────────────── */
     .card {
+      border: 1.5px solid #333;
       background: #fff;
-      border: 1.5px solid #d0d4db;
-      border-radius: 8px;
-      padding: 10px 14px;
-      min-width: 160px;
+      min-width: 120px;
       max-width: 220px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin: 4px 0;
+      flex-shrink: 0;
       position: relative;
-      z-index: 1;
     }
 
-    .person-card { border-left: 4px solid #2563eb; }
-    .unit-card   { border-left: 4px solid #64748b; }
-
-    .card-name {
+    .card-summary {
+      padding: 6px 14px;
       font-size: 13px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 2px;
+      font-weight: 500;
+      color: #222;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      list-style: none;       /* Remove default <details> marker */
     }
+    .card-summary::-webkit-details-marker { display: none; }
+
+    /* Hover feedback */
+    details.card > .card-summary:hover {
+      background: #f5f5f5;
+    }
+
+    /* Open state indicator */
+    details.card[open] {
+      border-color: #111;
+    }
+    details.card[open] > .card-summary {
+      border-bottom: 1px solid #ddd;
+      background: #fafafa;
+    }
+
+    /* Role / type label inline */
     .card-role {
-      font-size: 11px;
-      color: #555;
-      margin-bottom: 3px;
+      font-size: 10px;
+      font-weight: 400;
+      color: #888;
+      margin-left: auto;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
-    .card-dept {
+    .card-type {
+      font-size: 10px;
+      font-weight: 400;
+      color: #888;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Click hint arrow */
+    details.card > .card-summary::after {
+      content: '\\25BC';
+      font-size: 8px;
+      color: #bbb;
+      margin-left: 4px;
+      transition: transform 0.2s;
+    }
+    details.card[open] > .card-summary::after {
+      transform: rotate(180deg);
+    }
+
+    /* ── Detail Table (revealed on click) ────────────── */
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: 11px;
-      color: #2563eb;
-      margin-bottom: 3px;
     }
-    .card-meta {
+    .detail-table th,
+    .detail-table td {
+      padding: 4px 14px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .detail-table th {
+      font-weight: 500;
+      color: #888;
+      width: 72px;
+      white-space: nowrap;
+    }
+    .detail-table td {
+      color: #333;
+    }
+    .detail-table tr:last-child th,
+    .detail-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ── Node kind accent ─────────────────────────────── */
+    .node--person {
+      border-left: 3px solid #333;
+    }
+    .node--unit {
+      border-left: 3px solid #888;
+      background: #fafafa;
+    }
+
+    /* ── Footer ───────────────────────────────────────── */
+    .page-footer {
+      border-top: 1px solid #ddd;
+      padding: 16px 32px;
       font-size: 10px;
       color: #999;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .card-desc {
-      font-size: 10px;
-      color: #666;
-      margin-top: 4px;
-      line-height: 1.4;
+      text-align: right;
     }
 
-    .badge {
-      display: inline-block;
-      border-radius: 3px;
-      padding: 1px 6px;
-      font-size: 10px;
-      font-weight: 600;
-      margin-top: 3px;
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 640px) {
+      .chart-wrap { padding: 16px; }
+      .card { max-width: 180px; min-width: 100px; }
+      .card-summary { font-size: 12px; padding: 5px 10px; }
+      .children > .row { padding-left: 24px; }
+      .children > .row::before { width: 24px; }
     }
-    .badge-emp  { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
-    .badge-unit { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
 
-    /* Root level spacing */
-    .tree { overflow-x: auto; padding-bottom: 8px; }
-
+    /* ── Print ────────────────────────────────────────── */
     @media print {
-      body { padding: 16px; }
-      .card { box-shadow: none; }
+      body { font-size: 10px; }
+      .chart-wrap { padding: 8px; overflow: visible; }
+      details.card { open: true; }
+      details.card[open] > .card-summary::after { display: none; }
+      .card { break-inside: avoid; }
+      .page-header { border-bottom-width: 1px; padding: 12px 16px 8px; }
+      .page-footer { padding: 8px 16px; }
     }
   </style>
 </head>
 <body>
-  <h1>組織図</h1>
-  <p class="meta">出力日時: ${generatedAt}</p>
-  ${bodyHtml}
+  <header class="page-header">
+    <div class="page-title">組織図</div>
+    <div class="page-meta">
+      <span>出力日時: ${generatedAt}</span>
+      <span>メンバー: ${personCount} 名</span>
+      <span>組織: ${unitCount}</span>
+    </div>
+  </header>
+  <div class="chart-wrap">
+    ${bodyHtml}
+  </div>
+  <footer class="page-footer">
+    Exported from Organogram &middot; ${generatedAt}
+  </footer>
 </body>
 </html>`
 }
