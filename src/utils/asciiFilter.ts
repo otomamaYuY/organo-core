@@ -12,6 +12,23 @@ export function toHalfWidthPhone(value: string): string {
 }
 
 /**
+ * Normalizes an email input value:
+ * - Trims leading/trailing whitespace
+ * - Converts full-width alphanumerics (ａ-ｚ, Ａ-Ｚ, ０-９) to half-width
+ * - Converts full-width at-sign（＠）and dot（．）to half-width
+ */
+export function normalizeEmail(value: string): string {
+  return value
+    .trim()
+    .replace(/[ａ-ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[Ａ-Ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/＠/g, '@')
+    .replace(/．/g, '.')
+    .replace(/\s+/g, '')
+}
+
+/**
  * Strips characters outside printable ASCII (U+0020–U+007E).
  * Used for English-mode text inputs to prevent CJK / non-Latin input.
  *

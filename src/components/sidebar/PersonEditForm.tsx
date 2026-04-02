@@ -7,7 +7,7 @@ import { TagInput } from './TagInput'
 import { Save } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import { useLocaleStore } from '@/store/useLocaleStore'
-import { asciiOnChange, toHalfWidthPhone } from '@/utils/asciiFilter'
+import { asciiOnChange, toHalfWidthPhone, normalizeEmail } from '@/utils/asciiFilter'
 
 const FIELD_STYLE = {
   width: '100%',
@@ -80,6 +80,16 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     return { ...rest, onChange: asciiOnChange(locale, onChange) }
   }
 
+  // Email: normalize full-width chars and trim whitespace on input
+  const { onChange: emailOnChange, ...emailReg } = register('email')
+  const emailProps = {
+    ...emailReg,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.target.value = normalizeEmail(e.target.value)
+      emailOnChange(e)
+    },
+  }
+
   // Phone: convert full-width digits/hyphens to half-width on input
   const { onChange: phoneOnChange, ...phoneReg } = register('phone')
   const phoneProps = {
@@ -115,8 +125,7 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldEmail')}</label>
-        {/* Email is always ASCII-safe by nature */}
-        <input {...register('email')} type="email" style={FIELD_STYLE} />
+        <input {...emailProps} type="email" style={FIELD_STYLE} />
         {errors.email && (
           <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.email.message}</span>
         )}
