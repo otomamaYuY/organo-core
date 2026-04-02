@@ -46,9 +46,10 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     setValue,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<OrgPersonFormValues>({
     resolver: zodResolver(orgPersonSchema),
+    mode: 'onChange',
     defaultValues: {
       name: data.name,
       role: data.role,
@@ -155,21 +156,23 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       <button
         data-testid="btn-save-person"
         type="submit"
+        disabled={!isValid}
         style={{
-          background: 'var(--accent)',
-          color: '#fff',
+          background: isValid ? 'var(--accent)' : 'var(--surface-3)',
+          color: isValid ? '#fff' : 'var(--text-3)',
           border: 'none',
           borderRadius: 7,
           height: 36,
           padding: '0 14px',
           lineHeight: 1,
-          cursor: 'pointer',
+          cursor: isValid ? 'pointer' : 'not-allowed',
           fontSize: 13,
           fontWeight: 600,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 6,
+          transition: 'background 0.15s, color 0.15s',
         }}
       >
         <Save size={14} />
