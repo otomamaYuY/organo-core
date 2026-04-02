@@ -7,7 +7,7 @@ import { TagInput } from './TagInput'
 import { Save } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import { useLocaleStore } from '@/store/useLocaleStore'
-import { asciiOnChange } from '@/utils/asciiFilter'
+import { asciiOnChange, toHalfWidthPhone } from '@/utils/asciiFilter'
 
 const FIELD_STYLE = {
   width: '100%',
@@ -80,6 +80,16 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     return { ...rest, onChange: asciiOnChange(locale, onChange) }
   }
 
+  // Phone: convert full-width digits/hyphens to half-width on input
+  const { onChange: phoneOnChange, ...phoneReg } = register('phone')
+  const phoneProps = {
+    ...phoneReg,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.target.value = toHalfWidthPhone(e.target.value)
+      phoneOnChange(e)
+    },
+  }
+
   return (
     <form
       onSubmit={handleSubmit(values => onSave({ kind: 'person', ...values }))}
@@ -113,7 +123,10 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldPhone')}</label>
-        <input {...reg('phone')} style={FIELD_STYLE} />
+        <input {...phoneProps} type="tel" style={FIELD_STYLE} />
+        {errors.phone && (
+          <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.phone.message}</span>
+        )}
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldEmployment')}</label>

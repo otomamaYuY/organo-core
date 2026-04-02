@@ -1,4 +1,17 @@
 /**
+ * Converts full-width digits (０–９) and common full-width punctuation used
+ * in Japanese phone numbers (－、ー、（、）) to their half-width equivalents.
+ * Other characters are left unchanged.
+ */
+export function toHalfWidthPhone(value: string): string {
+  return value
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[－ー―]/g, '-')
+    .replace(/（/g, '(')
+    .replace(/）/g, ')')
+}
+
+/**
  * Strips characters outside printable ASCII (U+0020–U+007E).
  * Used for English-mode text inputs to prevent CJK / non-Latin input.
  *
