@@ -86,9 +86,9 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
       <div>
         <label style={LABEL_STYLE}>{t('fieldUnitName')} *</label>
         <input data-testid="input-unit-name" {...reg('unitName')} style={FIELD_STYLE} />
-        {errors.unitName && (
-          <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.unitName.message}</span>
-        )}
+        <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.unitName ? 'visible' : 'hidden' }}>
+          {errors.unitName?.message ?? '\u00A0'}
+        </span>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldUnitType')} *</label>

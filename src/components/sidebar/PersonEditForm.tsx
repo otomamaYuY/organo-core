@@ -109,16 +109,16 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       <div>
         <label style={LABEL_STYLE}>{t('fieldName')} *</label>
         <input data-testid="input-name" {...reg('name')} style={FIELD_STYLE} />
-        {errors.name && (
-          <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.name.message}</span>
-        )}
+        <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.name ? 'visible' : 'hidden' }}>
+          {errors.name?.message ?? '\u00A0'}
+        </span>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldRole')} *</label>
         <input data-testid="input-role" {...reg('role')} style={FIELD_STYLE} />
-        {errors.role && (
-          <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.role.message}</span>
-        )}
+        <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.role ? 'visible' : 'hidden' }}>
+          {errors.role?.message ?? '\u00A0'}
+        </span>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldDept')}</label>
@@ -127,16 +127,16 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       <div>
         <label style={LABEL_STYLE}>{t('fieldEmail')}</label>
         <input {...emailProps} type="email" style={FIELD_STYLE} />
-        {errors.email && (
-          <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.email.message}</span>
-        )}
+        <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.email ? 'visible' : 'hidden' }}>
+          {errors.email?.message ?? '\u00A0'}
+        </span>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldPhone')}</label>
         <input {...phoneProps} type="tel" style={FIELD_STYLE} />
-        {errors.phone && (
-          <span style={{ color: 'var(--danger)', fontSize: 11 }}>{errors.phone.message}</span>
-        )}
+        <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.phone ? 'visible' : 'hidden' }}>
+          {errors.phone?.message ?? '\u00A0'}
+        </span>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldEmployment')}</label>
