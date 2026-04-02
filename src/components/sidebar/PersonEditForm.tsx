@@ -8,6 +8,8 @@ import { Save } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import { useLocaleStore } from '@/store/useLocaleStore'
 import { asciiOnChange, toHalfWidthPhone, normalizeEmail } from '@/utils/asciiFilter'
+import { usePersonSuggestions } from '@/hooks/usePersonSuggestions'
+import { useOrgStore } from '@/store/useOrgStore'
 
 const FIELD_STYLE = {
   width: '100%',
@@ -39,6 +41,8 @@ interface PersonEditFormProps {
 export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
   const t = useT()
   const locale = useLocaleStore(s => s.locale)
+  const selectedNodeId = useOrgStore(s => s.selectedNodeId) ?? ''
+  const suggestions = usePersonSuggestions(selectedNodeId)
 
   const {
     register,
@@ -115,14 +119,20 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldRole')} *</label>
-        <input data-testid="input-role" {...reg('role')} style={FIELD_STYLE} />
+        <input data-testid="input-role" {...reg('role')} list="suggest-role" style={FIELD_STYLE} />
+        <datalist id="suggest-role">
+          {suggestions.roles.map(r => <option key={r} value={r} />)}
+        </datalist>
         <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.role ? 'visible' : 'hidden' }}>
           {errors.role?.message ?? '\u00A0'}
         </span>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldDept')}</label>
-        <input {...reg('department')} style={FIELD_STYLE} />
+        <input {...reg('department')} list="suggest-dept" style={FIELD_STYLE} />
+        <datalist id="suggest-dept">
+          {suggestions.departments.map(d => <option key={d} value={d} />)}
+        </datalist>
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldEmail')}</label>
@@ -151,7 +161,7 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       </div>
       <div>
         <label style={LABEL_STYLE}>{t('fieldTags')}</label>
-        <TagInput tags={tags} onChange={v => setValue('tags', v)} />
+        <TagInput tags={tags} onChange={v => setValue('tags', v)} suggestions={suggestions.tags} />
       </div>
       <button
         data-testid="btn-save-person"
