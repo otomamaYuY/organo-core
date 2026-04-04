@@ -17,6 +17,8 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useBeforeUnload } from '@/hooks/useBeforeUnload'
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour'
 import { HelpButton } from '@/components/onboarding/HelpButton'
+import { LandingOverlay } from '@/components/LandingOverlay'
+import { useOnboardingStore } from '@/store/useOnboardingStore'
 
 const nodeTypes = { orgNode: OrgNode }
 
@@ -39,6 +41,7 @@ export default function App() {
 
   useEffect(() => {
     useOrgStore.getState().hydrateFromStorage()
+    useOnboardingStore.getState().initLanding()
   }, [])
 
   useAutoSave()
@@ -167,6 +170,7 @@ export default function App() {
       data-testid="app-root"
       style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}
     >
+      <LandingOverlay />
       <OnboardingTour />
       <HelpButton />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

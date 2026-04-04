@@ -140,6 +140,12 @@ export const translations = {
   tourFinish: { ja: '完了', en: 'Finish' },
   tourSkip: { ja: 'スキップ', en: 'Skip' },
   helpBtnLabel: { ja: 'ヘルプ', en: 'Help' },
+
+  // ── Landing Overlay ─────────────────────────────────
+  landingCta: {
+    ja: '無料で始める',
+    en: 'Start Free',
+  },
 } as const satisfies Record<string, Record<Locale, string>>
 
 export type TranslationKey = keyof typeof translations

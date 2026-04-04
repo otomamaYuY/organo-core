@@ -10,11 +10,8 @@ export function OnboardingTour() {
   const { run, startTour, stopTour } = useOnboardingStore()
   const t = useT()
 
-  useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      startTour()
-    }
-  }, [startTour])
+  // Tour is now started by useOnboardingStore.completeLanding() or initLanding()
+  // No auto-start here — the landing overlay controls the flow
 
   const steps = getTourSteps({
     welcomeTitle: t('tourWelcomeTitle'),
