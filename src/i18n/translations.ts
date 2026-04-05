@@ -232,6 +232,11 @@ export const translations = {
   generateMembersConfirm: { ja: '生成する', en: 'Generate' },
   generateMembersSkip: { ja: 'スキップ', en: 'Skip' },
   generateMembersToast: { ja: '{{count}} 件のノードを追加しました', en: 'Added {{count}} node(s)' },
+
+  // ── Multi-selection ───────────────────────────────────
+  selectionNodes: { ja: 'ノード {{n}} 件', en: '{{n}} node(s)' },
+  selectionEdges: { ja: 'エッジ {{n}} 件', en: '{{n}} edge(s)' },
+  selectionHint: { ja: 'ドラッグで移動 / Deleteで削除', en: 'Drag to move · Delete key to remove' },
 } as const satisfies Record<string, Record<Locale, string>>
 
 export type TranslationKey = keyof typeof translations

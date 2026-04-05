@@ -11,6 +11,8 @@ import { NodeContextMenu } from '@/components/context-menu/NodeContextMenu'
 import { QuickNodeCreationMenu } from '@/components/quick-menu/QuickNodeCreationMenu'
 import { FitViewOnLayout } from '@/components/canvas/FitViewOnLayout'
 import { ExportBridge } from '@/components/canvas/ExportBridge'
+import { RightClickSelect } from '@/components/canvas/RightClickSelect'
+import { SelectionActionBar } from '@/components/canvas/SelectionActionBar'
 import { EmptyState } from '@/components/canvas/EmptyState'
 import { useSearch } from '@/hooks/useSearch'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -178,6 +180,7 @@ export default function App() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Toolbar />
         <div data-testid="react-flow-canvas" style={{ flex: 1, position: 'relative' }}>
+          <SelectionActionBar />
           <ReactFlow
             nodes={displayNodes}
             edges={edges}
@@ -195,6 +198,7 @@ export default function App() {
             onEdgeUpdate={handleEdgeUpdate}
             onEdgeUpdateEnd={handleEdgeUpdateEnd}
             onEdgeClick={handleEdgeClick}
+            onPaneContextMenu={e => e.preventDefault()}
             fitView
             snapToGrid
             snapGrid={[15, 15]}
@@ -207,6 +211,7 @@ export default function App() {
             <QuickNodeCreationMenu />
             <FitViewOnLayout />
             <ExportBridge />
+            <RightClickSelect />
           </ReactFlow>
           {nodes.length === 0 && <EmptyState />}
           <Sidebar />

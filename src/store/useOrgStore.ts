@@ -153,6 +153,7 @@ interface OrgState {
     },
   ) => void
   deleteEdge: (id: string) => void
+  deleteSelected: () => void
   applyAutoLayout: () => void
 
   importFromJson: (json: unknown) => void
@@ -377,6 +378,21 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       edges: state.edges.filter(e => e.id !== id),
       isDirty: true,
     })),
+
+  deleteSelected: () =>
+    set(state => {
+      const selectedNodeIds = new Set(state.nodes.filter(n => n.selected).map(n => n.id))
+      const selectedEdgeIds = new Set(state.edges.filter(e => e.selected).map(e => e.id))
+      if (selectedNodeIds.size === 0 && selectedEdgeIds.size === 0) return state
+      return {
+        nodes: state.nodes.filter(n => !selectedNodeIds.has(n.id)),
+        edges: state.edges.filter(
+          e => !selectedEdgeIds.has(e.id) && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
+        ),
+        selectedNodeId: selectedNodeIds.has(state.selectedNodeId ?? '') ? null : state.selectedNodeId,
+        isDirty: true,
+      }
+    }),
 
   applyAutoLayout: () =>
     set(state => ({
