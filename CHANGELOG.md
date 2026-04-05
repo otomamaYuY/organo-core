@@ -4,6 +4,26 @@ All notable changes to **organo-core** are documented in this file.
 
 ---
 
+## [v1.4.0] — 2025-04-05
+
+### New Features
+
+#### Head Person Auto-Populated on Child Org Unit Creation
+When an org-unit node is added below a person node (via handle drag, context menu, or auto-generation), the new unit's **Head Person** field is automatically pre-filled with the parent person's name, reflecting the common pattern where a person leads the unit directly beneath them.
+
+### Bug Fixes
+
+#### Top Handle Drag Now Creates a Parent Node
+Dragging from the **top connector** of a node and releasing on empty canvas previously created a child node — the same behavior as the bottom connector. The direction is now correct: the newly created node becomes the **parent** and the original node becomes its child, with an edge connecting them in the right direction.
+
+#### Duplicate Head Person Nodes No Longer Created on Re-Save
+Saving an org-unit with the same **Head Person** name multiple times created duplicate person nodes under the parent unit. The root cause was a stale React closure: the duplicate check was reading an outdated snapshot of the store's edges rather than the current state. Fixed by reading `getState()` directly from the Zustand store at check time.
+
+#### Member Count and Child Unit Count Default to 0
+Newly created org-unit nodes now show **0** in the Member Count and Child Units fields instead of blank, preventing ambiguity and making the auto-generation dialog behave predictably on the first save.
+
+---
+
 ## [v1.3.0] — 2025-04-05
 
 ### New Features
