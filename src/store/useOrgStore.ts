@@ -135,7 +135,7 @@ interface OrgState {
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
 
-  addPersonNode: (parentId?: string, position?: { x: number; y: number }, initialData?: Partial<OrgPersonData>) => void
+  addPersonNode: (parentId?: string, position?: { x: number; y: number }, initialData?: Partial<OrgPersonData>, updateParentCount?: boolean) => void
   insertPersonAboveNode: (targetNodeId: string, initialData?: Partial<OrgPersonData>) => string
   addUnitNode: (parentId?: string, position?: { x: number; y: number }) => void
   updateNode: (id: string, data: Partial<OrgNodeData>) => void
@@ -252,7 +252,7 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       }
     }),
 
-  addPersonNode: (parentId, position, initialData) => {
+  addPersonNode: (parentId, position, initialData, updateParentCount = true) => {
     const id = generateId()
     const parentNode = parentId ? get().nodes.find(n => n.id === parentId) : null
     const nodePosition =
@@ -275,8 +275,18 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       },
     }
 
+    const shouldIncrementCount = updateParentCount && parentNode?.data.kind === 'org-unit'
+
     set(state => ({
-      nodes: [...state.nodes, newNode],
+      nodes: shouldIncrementCount
+        ? state.nodes.map(n => {
+            if (n.id === parentId) {
+              const d = n.data as OrgUnitData
+              return { ...n, data: { ...d, memberCount: (d.memberCount ?? 0) + 1 } }
+            }
+            return n
+          }).concat(newNode)
+        : [...state.nodes, newNode],
       edges: parentId
         ? [
             ...state.edges,
