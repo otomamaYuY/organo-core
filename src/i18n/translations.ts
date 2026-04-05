@@ -168,9 +168,11 @@ export const translations = {
     en: 'Credentials are stored only in your browser localStorage.',
   },
   tooltipSettings: { ja: 'AI設定', en: 'AI Settings' },
+  settingsComingSoon: { ja: '近日対応予定', en: 'Coming Soon' },
+  settingsOnlyOpenai: { ja: '現在はOpenAIのみ対応しています。Amazon Bedrock・Azure OpenAIは近日対応予定です。', en: 'Currently only OpenAI is supported. Amazon Bedrock and Azure OpenAI are coming soon.' },
 
   // ── AI Image Import (Phase 2) ────────────────────────
-  aiImportBtn: { ja: 'AI画像インポート ✨', en: 'AI Image Import ✨' },
+  aiImportBtn: { ja: 'AI画像インポート', en: 'AI Image Import' },
   tooltipAiImport: { ja: '画像から組織図をAIで生成（プレミアム）', en: 'Generate org chart from image via AI (Premium)' },
   aiImportTitle: { ja: 'AI画像インポート（プレミアム）', en: 'AI Image Import (Premium)' },
   aiImportNeedsConfig: {

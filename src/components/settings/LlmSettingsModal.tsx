@@ -99,12 +99,21 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
         <select
           value={provider}
           onChange={(e) => setProvider(e.target.value as LlmProvider)}
-          style={{ width: '100%', marginBottom: 16 }}
+          style={{ width: '100%', marginBottom: 8 }}
         >
-          <option value="bedrock">{t('settingsProviderBedrock')}</option>
           <option value="openai">{t('settingsProviderOpenai')}</option>
-          <option value="azure-openai">{t('settingsProviderAzure')}</option>
+          <option value="bedrock" disabled>{t('settingsProviderBedrock')} ({t('settingsComingSoon')})</option>
+          <option value="azure-openai" disabled>{t('settingsProviderAzure')} ({t('settingsComingSoon')})</option>
         </select>
+        <div
+          style={{
+            color: 'var(--text-3)',
+            fontSize: 11,
+            marginBottom: 16,
+          }}
+        >
+          {t('settingsOnlyOpenai')}
+        </div>
 
         {/* Dynamic Fields */}
         {provider === 'bedrock' && (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trash2, ChevronRight } from 'lucide-react'
+import { Trash2, ChevronRight, Bot } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import type { ExtractedPerson } from '@/services/llm'
 
@@ -62,7 +62,7 @@ export function ImportPreview({ persons: initial, onApply, onBack }: ImportPrevi
             marginBottom: 6,
           }}
         >
-          <span style={{ fontSize: 16 }}>✨</span>
+          <Bot size={15} color="var(--accent)" />
           <span style={{ color: 'var(--text)', fontWeight: 700, fontSize: 15 }}>
             {t('previewTitle')}
           </span>

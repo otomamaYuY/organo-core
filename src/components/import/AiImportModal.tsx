@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { X, ImagePlus, Clipboard, AlertCircle } from 'lucide-react'
+import { X, ImagePlus, Clipboard, AlertCircle, Bot } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import type { TranslationKey } from '@/i18n/translations'
 import { useLlmSettingsStore } from '@/store/useLlmSettingsStore'
@@ -105,7 +105,7 @@ export function AiImportModal({
         <Backdrop onClick={handleClose}>
           <Panel width={360} onClick={(e) => e.stopPropagation()}>
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>✨</div>
+              <div style={{ marginBottom: 12, color: 'var(--accent)' }}><Bot size={36} /></div>
               <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
                 {t('aiImportTitle')}
               </div>
@@ -344,7 +344,7 @@ function ModalHeader({ title, onClose }: { title: string; onClose: () => void })
           gap: 7,
         }}
       >
-        <span style={{ fontSize: 16 }}>✨</span>
+        <Bot size={15} color="var(--accent)" />
         {title}
       </div>
       <button
