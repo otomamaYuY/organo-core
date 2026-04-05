@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { orgPersonSchema, type OrgPersonFormValues } from '@/schemas/orgPerson.schema'
+import { createOrgPersonSchema, type OrgPersonFormValues } from '@/schemas/orgPerson.schema'
 import type { OrgPersonData } from '@/types'
 import { TagInput } from './TagInput'
 import { Save } from 'lucide-react'
@@ -52,7 +52,7 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     reset,
     formState: { errors, isValid },
   } = useForm<OrgPersonFormValues>({
-    resolver: zodResolver(orgPersonSchema),
+    resolver: zodResolver(createOrgPersonSchema(locale)),
     mode: 'onChange',
     defaultValues: {
       name: data.name,

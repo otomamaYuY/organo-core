@@ -7,6 +7,7 @@ import { GenerateMembersDialog, type GenerateNodeKind } from './GenerateMembersD
 import { toast } from '@/store/useToastStore'
 import type { OrgNodeData, OrgPersonData, OrgUnitData } from '@/types'
 import { useT } from '@/hooks/useT'
+import { useLocaleStore } from '@/store/useLocaleStore'
 
 interface PendingGenerate {
   unitId: string
@@ -21,6 +22,7 @@ export function Sidebar() {
   const selectedNode = nodes.find(n => n.id === selectedNodeId)
   const visible = !!selectedNode
   const t = useT()
+  const locale = useLocaleStore(s => s.locale)
   const [pendingGenerate, setPendingGenerate] = useState<PendingGenerate | null>(null)
 
   const handleUnitSave = (unitId: string, unitName: string, values: Partial<OrgNodeData>) => {
@@ -162,11 +164,13 @@ export function Sidebar() {
           <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
             {selectedNode.data.kind === 'person' ? (
               <PersonEditForm
+                key={`${selectedNode.id}-${locale}`}
                 data={selectedNode.data as OrgPersonData}
                 onSave={values => updateNode(selectedNode.id, values as Partial<OrgNodeData>)}
               />
             ) : (
               <UnitEditForm
+                key={`${selectedNode.id}-${locale}`}
                 data={selectedNode.data as OrgUnitData}
                 onSave={values =>
                   handleUnitSave(

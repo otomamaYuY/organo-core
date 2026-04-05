@@ -233,6 +233,14 @@ export const translations = {
   generateMembersSkip: { ja: 'スキップ', en: 'Skip' },
   generateMembersToast: { ja: '{{count}} 件のノードを追加しました', en: 'Added {{count}} node(s)' },
 
+  // ── Validation messages ───────────────────────────────
+  validNameRequired: { ja: '氏名は必須です', en: 'Name is required' },
+  validRoleRequired: { ja: '役職は必須です', en: 'Role is required' },
+  validEmailMax: { ja: 'メールアドレスは254文字以内で入力してください', en: 'Email must be 254 characters or fewer' },
+  validEmailFormat: { ja: '正しいメールアドレスを入力してください', en: 'Please enter a valid email address' },
+  validPhoneFormat: { ja: '半角数字、ハイフン、国際番号(+)のみで入力してください', en: 'Use digits, hyphens, and + only' },
+  validUnitNameRequired: { ja: '組織名は必須です', en: 'Unit name is required' },
+
   // ── Multi-selection ───────────────────────────────────
   selectionNodes: { ja: 'ノード {{n}} 件', en: '{{n}} node(s)' },
   selectionEdges: { ja: 'エッジ {{n}} 件', en: '{{n}} edge(s)' },

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { orgUnitSchema, type OrgUnitFormValues } from '@/schemas/orgUnit.schema'
+import { createOrgUnitSchema, type OrgUnitFormValues } from '@/schemas/orgUnit.schema'
 import type { OrgUnitData } from '@/types'
 import { TagInput } from './TagInput'
 import { Save } from 'lucide-react'
@@ -48,7 +48,7 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
     reset,
     formState: { errors, isValid },
   } = useForm<OrgUnitFormValues>({
-    resolver: zodResolver(orgUnitSchema),
+    resolver: zodResolver(createOrgUnitSchema(locale)),
     mode: 'onChange',
     defaultValues: {
       unitName: data.unitName,
