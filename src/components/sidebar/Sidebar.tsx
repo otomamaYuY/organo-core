@@ -1,17 +1,51 @@
+import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useOrgStore } from '@/store/useOrgStore'
 import { PersonEditForm } from './PersonEditForm'
 import { UnitEditForm } from './UnitEditForm'
+import { GenerateMembersDialog } from './GenerateMembersDialog'
+import { toast } from '@/store/useToastStore'
 import type { OrgNodeData, OrgPersonData, OrgUnitData } from '@/types'
 import { useT } from '@/hooks/useT'
 
+interface PendingGenerate {
+  unitId: string
+  unitName: string
+  count: number
+  existingCount: number
+}
+
 export function Sidebar() {
-  const { nodes, selectedNodeId, updateNode, deleteNode } = useOrgStore()
+  const { nodes, edges, selectedNodeId, updateNode, deleteNode, addPersonNode, applyAutoLayout, selectNode } = useOrgStore()
   const selectedNode = nodes.find(n => n.id === selectedNodeId)
   const visible = !!selectedNode
   const t = useT()
+  const [pendingGenerate, setPendingGenerate] = useState<PendingGenerate | null>(null)
+
+  const handleUnitSave = (unitId: string, unitName: string, values: Partial<OrgNodeData>) => {
+    updateNode(unitId, values)
+    const memberCount = (values as OrgUnitData).memberCount ?? 0
+    if (memberCount <= 0) return
+    const existingCount = edges.filter(e => e.source === unitId).length
+    const toGenerate = Math.max(0, memberCount - existingCount)
+    if (toGenerate > 0) {
+      setPendingGenerate({ unitId, unitName, count: toGenerate, existingCount })
+    }
+  }
+
+  const handleGenerateConfirm = (count: number) => {
+    if (!pendingGenerate) return
+    for (let i = 0; i < count; i++) {
+      addPersonNode(pendingGenerate.unitId)
+    }
+    applyAutoLayout()
+    selectNode(pendingGenerate.unitId)
+    toast.success(t('generateMembersToast').replace('{{count}}', String(count)))
+    setPendingGenerate(null)
+  }
 
   return (
+    <>
     <div
       data-testid="sidebar"
       style={{
@@ -84,12 +118,29 @@ export function Sidebar() {
             ) : (
               <UnitEditForm
                 data={selectedNode.data as OrgUnitData}
-                onSave={values => updateNode(selectedNode.id, values as Partial<OrgNodeData>)}
+                onSave={values =>
+                  handleUnitSave(
+                    selectedNode.id,
+                    (selectedNode.data as OrgUnitData).unitName,
+                    values as Partial<OrgNodeData>,
+                  )
+                }
               />
             )}
           </div>
         </>
       )}
     </div>
+
+    {pendingGenerate && (
+      <GenerateMembersDialog
+        unitName={pendingGenerate.unitName}
+        suggestedCount={pendingGenerate.count}
+        existingCount={pendingGenerate.existingCount}
+        onConfirm={handleGenerateConfirm}
+        onSkip={() => setPendingGenerate(null)}
+      />
+    )}
+    </>
   )
 }

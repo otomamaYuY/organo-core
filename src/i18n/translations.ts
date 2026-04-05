@@ -212,6 +212,21 @@ export const translations = {
   toastReplaced: { ja: '組織図を{{count}}名のデータで置き換えました', en: 'Replaced chart with {{count}} people' },
   aiImportInvalidType: { ja: '画像ファイルを選択してください（PNG, JPEGなど）', en: 'Please select an image file (PNG, JPEG, etc.)' },
   aiImportTooLarge: { ja: 'ファイルサイズが大きすぎます（上限{{mb}}MB）', en: 'File is too large (max {{mb}}MB)' },
+
+  // ── Generate Members Dialog ──────────────────────────
+  generateMembersTitle: { ja: 'メンバーノードを生成', en: 'Generate Member Nodes' },
+  generateMembersDesc: {
+    ja: '「{{unit}}」の配下に {{count}} 名分のメンバーノードを自動生成してエッジで接続します。',
+    en: 'Auto-generate {{count}} member node(s) under "{{unit}}" and connect them with edges.',
+  },
+  generateMembersExisting: {
+    ja: '（既存の子ノード {{existing}} 件を除いた差分）',
+    en: '({{existing}} existing child node(s) excluded)',
+  },
+  generateMembersCount: { ja: '生成する人数', en: 'Count to generate' },
+  generateMembersConfirm: { ja: '生成する', en: 'Generate' },
+  generateMembersSkip: { ja: 'スキップ', en: 'Skip' },
+  generateMembersToast: { ja: '{{count}} 名のメンバーノードを追加しました', en: 'Added {{count}} member node(s)' },
 } as const satisfies Record<string, Record<Locale, string>>
 
 export type TranslationKey = keyof typeof translations
