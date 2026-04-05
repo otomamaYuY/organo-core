@@ -51,6 +51,7 @@ export default function App() {
   useBeforeUnload()
 
   const connectingNodeId = useRef<string | null>(null)
+  const connectingHandleType = useRef<'source' | 'target' | null>(null)
   const edgeReconnectSuccess = useRef(false)
   const connectSucceeded = useRef(false)
 
@@ -78,8 +79,9 @@ export default function App() {
   )
 
   const handleConnectStart = useCallback(
-    (_: React.MouseEvent | React.TouchEvent, params: { nodeId: string | null }) => {
+    (_: React.MouseEvent | React.TouchEvent, params: { nodeId: string | null; handleType?: 'source' | 'target' | null }) => {
       connectingNodeId.current = params.nodeId
+      connectingHandleType.current = params.handleType ?? null
     },
     [],
   )
@@ -148,7 +150,9 @@ export default function App() {
   const handleConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent) => {
       const sourceId = connectingNodeId.current
+      const handleType = connectingHandleType.current
       connectingNodeId.current = null
+      connectingHandleType.current = null
 
       // Connection was completed successfully — do not show creation menu
       if (connectSucceeded.current) {
@@ -161,7 +165,7 @@ export default function App() {
       const clientX = 'clientX' in event ? event.clientX : event.touches[0].clientX
       const clientY = 'clientY' in event ? event.clientY : event.touches[0].clientY
 
-      setQuickCreateMenu({ visible: true, x: clientX, y: clientY, sourceNodeId: sourceId })
+      setQuickCreateMenu({ visible: true, x: clientX, y: clientY, sourceNodeId: sourceId, handleType })
     },
     [setQuickCreateMenu],
   )

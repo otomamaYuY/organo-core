@@ -5,7 +5,7 @@ import { useOrgStore } from '@/store/useOrgStore'
 import { useT } from '@/hooks/useT'
 
 export function QuickNodeCreationMenu() {
-  const { quickCreateMenu, setQuickCreateMenu, addPersonNode, addUnitNode } = useOrgStore()
+  const { quickCreateMenu, setQuickCreateMenu, addPersonNode, addUnitNode, connectNodes } = useOrgStore()
   const { screenToFlowPosition } = useReactFlow()
   const menuRef = useRef<HTMLDivElement>(null)
   const t = useT()
@@ -14,7 +14,7 @@ export function QuickNodeCreationMenu() {
     if (!quickCreateMenu.visible) return
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setQuickCreateMenu({ visible: false, x: 0, y: 0, sourceNodeId: null })
+        setQuickCreateMenu({ visible: false, x: 0, y: 0, sourceNodeId: null, handleType: null })
       }
     }
     document.addEventListener('mousedown', handler)
@@ -31,9 +31,23 @@ export function QuickNodeCreationMenu() {
   const handleCreate = (type: 'person' | 'unit') => {
     const position = screenToFlowPosition({ x: quickCreateMenu.x, y: quickCreateMenu.y })
     const sourceId = quickCreateMenu.sourceNodeId || undefined
-    if (type === 'person') addPersonNode(sourceId, position)
-    else addUnitNode(sourceId, position)
-    setQuickCreateMenu({ visible: false, x: 0, y: 0, sourceNodeId: null })
+    const isDragFromTop = quickCreateMenu.handleType === 'target'
+
+    if (isDragFromTop && sourceId) {
+      // Top handle drag: new node becomes the parent; existing node becomes the child.
+      // Create without a parent, then connect new → existing.
+      if (type === 'person') addPersonNode(undefined, position)
+      else addUnitNode(undefined, position)
+      // The newly created node is now selectedNodeId in the store
+      const newNodeId = useOrgStore.getState().selectedNodeId
+      if (newNodeId) connectNodes(newNodeId, sourceId)
+    } else {
+      // Bottom handle drag (default): new node is a child of sourceId
+      if (type === 'person') addPersonNode(sourceId, position)
+      else addUnitNode(sourceId, position)
+    }
+
+    setQuickCreateMenu({ visible: false, x: 0, y: 0, sourceNodeId: null, handleType: null })
   }
 
   return (

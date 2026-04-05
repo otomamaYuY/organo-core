@@ -118,6 +118,7 @@ interface QuickCreateMenuState {
   x: number
   y: number
   sourceNodeId: string | null
+  handleType: 'source' | 'target' | null
 }
 
 interface OrgState {
@@ -156,6 +157,7 @@ interface OrgState {
   ) => void
   deleteEdge: (id: string) => void
   deleteSelected: () => void
+  connectNodes: (parentId: string, childId: string) => void
   applyAutoLayout: () => void
 
   importFromJson: (json: unknown) => void
@@ -182,7 +184,7 @@ export const useOrgStore = create<OrgState>((set, get) => ({
   searchQuery: '',
   layoutVersion: 0,
   contextMenu: null,
-  quickCreateMenu: { visible: false, x: 0, y: 0, sourceNodeId: null },
+  quickCreateMenu: { visible: false, x: 0, y: 0, sourceNodeId: null, handleType: null },
   isDirty: false,
 
   markDirty: () => set({ isDirty: true }),
@@ -384,6 +386,22 @@ export const useOrgStore = create<OrgState>((set, get) => ({
   deleteEdge: id =>
     set(state => ({
       edges: state.edges.filter(e => e.id !== id),
+      isDirty: true,
+    })),
+
+  connectNodes: (parentId, childId) =>
+    set(state => ({
+      edges: [
+        ...state.edges,
+        {
+          id: `e_${parentId}_${childId}`,
+          source: parentId,
+          target: childId,
+          type: 'smoothstep',
+          animated: true,
+          data: { relationshipType: 'reports-to' },
+        },
+      ],
       isDirty: true,
     })),
 
