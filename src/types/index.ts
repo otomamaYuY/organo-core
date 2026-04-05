@@ -48,6 +48,7 @@ export interface OrgUnitData {
   unitType: OrgUnitType
   headPersonName?: string
   memberCount?: number
+  childUnitCount?: number
   description?: string
   tags?: string[]
   isCollapsed?: boolean

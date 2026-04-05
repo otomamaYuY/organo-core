@@ -39,7 +39,8 @@ export const translations = {
   fieldUnitName: { ja: '組織名', en: 'Unit Name' },
   fieldUnitType: { ja: '種別', en: 'Type' },
   fieldHeadPerson: { ja: '部門長名', en: 'Head Person' },
-  fieldMemberCount: { ja: '人数', en: 'Members' },
+  fieldMemberCount: { ja: '人数（メンバー）', en: 'Members' },
+  fieldChildUnitCount: { ja: '子組織数', en: 'Child Units' },
   fieldDescription: { ja: '説明', en: 'Description' },
 
   // ── Unit types ───────────────────────────────────────
@@ -214,18 +215,19 @@ export const translations = {
   aiImportTooLarge: { ja: 'ファイルサイズが大きすぎます（上限{{mb}}MB）', en: 'File is too large (max {{mb}}MB)' },
 
   // ── Generate Members Dialog ──────────────────────────
-  generateMembersTitle: { ja: 'メンバーノードを生成', en: 'Generate Member Nodes' },
-  generateMembersDesc: {
-    ja: '「{{unit}}」の配下に {{count}} 名分のメンバーノードを自動生成してエッジで接続します。',
-    en: 'Auto-generate {{count}} member node(s) under "{{unit}}" and connect them with edges.',
+  generateMembersTitle: { ja: 'ノードを自動生成', en: 'Auto-generate Nodes' },
+  generateMembersDescPerson: {
+    ja: '「{{unit}}」の配下に {{count}} 件の人物ノードを自動生成してエッジで接続します。',
+    en: 'Auto-generate {{count}} person node(s) under "{{unit}}" and connect them with edges.',
+  },
+  generateMembersDescUnit: {
+    ja: '「{{unit}}」の配下に {{count}} 件の子組織ノードを自動生成してエッジで接続します。',
+    en: 'Auto-generate {{count}} child org unit node(s) under "{{unit}}" and connect them with edges.',
   },
   generateMembersExisting: {
     ja: '（既存の子ノード {{existing}} 件を除いた差分）',
     en: '({{existing}} existing child node(s) excluded)',
   },
-  generateMembersNodeType: { ja: 'ノード種別', en: 'Node type' },
-  generateMembersTypePerson: { ja: '人物ノード', en: 'Person nodes' },
-  generateMembersTypeUnit: { ja: '組織ノード', en: 'Org unit nodes' },
   generateMembersCount: { ja: '生成する数', en: 'Count to generate' },
   generateMembersConfirm: { ja: '生成する', en: 'Generate' },
   generateMembersSkip: { ja: 'スキップ', en: 'Skip' },

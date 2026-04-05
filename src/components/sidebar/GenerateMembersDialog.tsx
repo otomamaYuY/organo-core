@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { Users, Building2 } from 'lucide-react'
 import { useT } from '@/hooks/useT'
-import type { NodeKind } from '@/types'
 
-export type GenerateNodeKind = Extract<NodeKind, 'person' | 'org-unit'>
+export type GenerateNodeKind = 'person' | 'org-unit'
 
 interface GenerateMembersDialogProps {
   unitName: string
   suggestedCount: number
   existingCount: number
-  onConfirm: (count: number, kind: GenerateNodeKind) => void
+  kind: GenerateNodeKind
+  onConfirm: (count: number) => void
   onSkip: () => void
 }
 
@@ -17,20 +17,23 @@ export function GenerateMembersDialog({
   unitName,
   suggestedCount,
   existingCount,
+  kind,
   onConfirm,
   onSkip,
 }: GenerateMembersDialogProps) {
   const t = useT()
   const [count, setCount] = useState(suggestedCount)
-  const [kind, setKind] = useState<GenerateNodeKind>('person')
 
-  const desc = t('generateMembersDesc')
+  const descKey = kind === 'person' ? 'generateMembersDescPerson' : 'generateMembersDescUnit'
+  const desc = t(descKey)
     .replace('{{unit}}', unitName)
     .replace('{{count}}', String(count))
 
   const existingNote = existingCount > 0
     ? t('generateMembersExisting').replace('{{existing}}', String(existingCount))
     : null
+
+  const Icon = kind === 'person' ? Users : Building2
 
   return (
     <div
@@ -71,7 +74,7 @@ export function GenerateMembersDialog({
               flexShrink: 0,
             }}
           >
-            <Users size={15} color="var(--accent)" />
+            <Icon size={15} color="var(--accent)" />
           </div>
           <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 14 }}>
             {t('generateMembersTitle')}
@@ -87,54 +90,6 @@ export function GenerateMembersDialog({
             {existingNote}
           </div>
         )}
-
-        {/* Node type toggle */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
-            {t('generateMembersNodeType')}
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              padding: 3,
-              gap: 3,
-            }}
-          >
-            {(['person', 'org-unit'] as GenerateNodeKind[]).map((k) => {
-              const active = kind === k
-              const Icon = k === 'person' ? Users : Building2
-              const label = k === 'person' ? t('generateMembersTypePerson') : t('generateMembersTypeUnit')
-              return (
-                <button
-                  key={k}
-                  onClick={() => setKind(k)}
-                  style={{
-                    flex: 1,
-                    height: 32,
-                    borderRadius: 6,
-                    border: active ? '1px solid var(--accent-border)' : '1px solid transparent',
-                    background: active ? 'var(--accent-bg)' : 'transparent',
-                    color: active ? 'var(--accent-text)' : 'var(--text-3)',
-                    fontSize: 12,
-                    fontWeight: active ? 600 : 400,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 5,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <Icon size={13} />
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
 
         {/* Count stepper */}
         <div style={{ marginBottom: 20 }}>
@@ -165,7 +120,7 @@ export function GenerateMembersDialog({
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={() => onConfirm(count, kind)}
+            onClick={() => onConfirm(count)}
             style={{
               flex: 1,
               height: 36,
@@ -182,7 +137,7 @@ export function GenerateMembersDialog({
               gap: 6,
             }}
           >
-            {kind === 'person' ? <Users size={13} /> : <Building2 size={13} />}
+            <Icon size={13} />
             {t('generateMembersConfirm')}
           </button>
           <button

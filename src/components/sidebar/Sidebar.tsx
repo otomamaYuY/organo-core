@@ -13,6 +13,7 @@ interface PendingGenerate {
   unitName: string
   count: number
   existingCount: number
+  kind: GenerateNodeKind
 }
 
 export function Sidebar() {
@@ -24,19 +25,41 @@ export function Sidebar() {
 
   const handleUnitSave = (unitId: string, unitName: string, values: Partial<OrgNodeData>) => {
     updateNode(unitId, values)
-    const memberCount = (values as OrgUnitData).memberCount ?? 0
-    if (memberCount <= 0) return
-    const existingCount = edges.filter(e => e.source === unitId).length
-    const toGenerate = Math.max(0, memberCount - existingCount)
-    if (toGenerate > 0) {
-      setPendingGenerate({ unitId, unitName, count: toGenerate, existingCount })
+    const unitData = values as OrgUnitData
+    const memberCount = unitData.memberCount ?? 0
+    const childUnitCount = unitData.childUnitCount ?? 0
+
+    // childUnitCount takes priority; fallback to memberCount
+    if (childUnitCount > 0) {
+      const existingUnitChildren = edges.filter(e => {
+        if (e.source !== unitId) return false
+        const targetNode = nodes.find(n => n.id === e.target)
+        return targetNode?.data.kind === 'org-unit'
+      }).length
+      const toGenerate = Math.max(0, childUnitCount - existingUnitChildren)
+      if (toGenerate > 0) {
+        setPendingGenerate({ unitId, unitName, count: toGenerate, existingCount: existingUnitChildren, kind: 'org-unit' })
+        return
+      }
+    }
+
+    if (memberCount > 0) {
+      const existingPersonChildren = edges.filter(e => {
+        if (e.source !== unitId) return false
+        const targetNode = nodes.find(n => n.id === e.target)
+        return targetNode?.data.kind === 'person'
+      }).length
+      const toGenerate = Math.max(0, memberCount - existingPersonChildren)
+      if (toGenerate > 0) {
+        setPendingGenerate({ unitId, unitName, count: toGenerate, existingCount: existingPersonChildren, kind: 'person' })
+      }
     }
   }
 
-  const handleGenerateConfirm = (count: number, kind: GenerateNodeKind) => {
+  const handleGenerateConfirm = (count: number) => {
     if (!pendingGenerate) return
     for (let i = 0; i < count; i++) {
-      if (kind === 'person') {
+      if (pendingGenerate.kind === 'person') {
         addPersonNode(pendingGenerate.unitId)
       } else {
         addUnitNode(pendingGenerate.unitId)
@@ -141,6 +164,7 @@ export function Sidebar() {
         unitName={pendingGenerate.unitName}
         suggestedCount={pendingGenerate.count}
         existingCount={pendingGenerate.existingCount}
+        kind={pendingGenerate.kind}
         onConfirm={handleGenerateConfirm}
         onSkip={() => setPendingGenerate(null)}
       />

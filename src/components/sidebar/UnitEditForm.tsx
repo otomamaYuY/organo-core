@@ -55,6 +55,7 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
       unitType: data.unitType,
       headPersonName: data.headPersonName ?? '',
       memberCount: data.memberCount,
+      childUnitCount: data.childUnitCount,
       description: data.description ?? '',
       tags: data.tags ?? [],
     },
@@ -66,6 +67,7 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
       unitType: data.unitType,
       headPersonName: data.headPersonName ?? '',
       memberCount: data.memberCount,
+      childUnitCount: data.childUnitCount,
       description: data.description ?? '',
       tags: data.tags ?? [],
     })
@@ -113,6 +115,15 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
         {/* number inputs are inherently ASCII — no filter needed */}
         <input
           {...register('memberCount', { valueAsNumber: true })}
+          type="number"
+          min={0}
+          style={FIELD_STYLE}
+        />
+      </div>
+      <div>
+        <label style={LABEL_STYLE}>{t('fieldChildUnitCount')}</label>
+        <input
+          {...register('childUnitCount', { valueAsNumber: true })}
           type="number"
           min={0}
           style={FIELD_STYLE}

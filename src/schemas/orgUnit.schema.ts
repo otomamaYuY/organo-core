@@ -14,6 +14,7 @@ export const orgUnitSchema = z.object({
   ]),
   headPersonName: z.string().max(100).optional().or(z.literal('')),
   memberCount: z.number().int().nonnegative().optional(),
+  childUnitCount: z.number().int().nonnegative().optional(),
   description: z.string().max(500).optional().or(z.literal('')),
   tags: z.array(z.string().max(30)).max(10).optional(),
 })
