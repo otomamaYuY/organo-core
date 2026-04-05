@@ -84,8 +84,7 @@ export function Sidebar() {
     if (!pendingGenerate) return
     for (let i = 0; i < count; i++) {
       if (pendingGenerate.kind === 'person') {
-        // memberCount was already set via the form save; skip auto-increment to avoid double-counting
-        addPersonNode(pendingGenerate.unitId, undefined, undefined, false)
+        addPersonNode(pendingGenerate.unitId)
       } else {
         addUnitNode(pendingGenerate.unitId)
       }

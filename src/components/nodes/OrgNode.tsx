@@ -19,6 +19,24 @@ function OrgNodeComponent({ id, data, selected }: NodeProps<OrgNodeData>) {
   const connectionNodeId = useStore(s => s.connectionNodeId)
   const connectionHandleType = useStore(s => s.connectionHandleType)
 
+  // Derive actual child counts from edges for org-unit display
+  const personChildCount = useOrgStore(s => {
+    if (data.kind !== 'org-unit') return 0
+    return s.edges.filter(e => {
+      if (e.source !== id) return false
+      const target = s.nodes.find(n => n.id === e.target)
+      return target?.data.kind === 'person'
+    }).length
+  })
+  const unitChildCount = useOrgStore(s => {
+    if (data.kind !== 'org-unit') return 0
+    return s.edges.filter(e => {
+      if (e.source !== id) return false
+      const target = s.nodes.find(n => n.id === e.target)
+      return target?.data.kind === 'org-unit'
+    }).length
+  })
+
   const isConnecting = !!connectionNodeId
   const isSelf = connectionNodeId === id
 
@@ -51,7 +69,12 @@ function OrgNodeComponent({ id, data, selected }: NodeProps<OrgNodeData>) {
       {data.kind === 'person' ? (
         <PersonCard data={data} selected={selected ?? false} />
       ) : (
-        <UnitBanner data={data} selected={selected ?? false} />
+        <UnitBanner
+          data={data}
+          selected={selected ?? false}
+          personChildCount={personChildCount}
+          unitChildCount={unitChildCount}
+        />
       )}
       <Handle
         type="source"

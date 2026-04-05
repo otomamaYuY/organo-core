@@ -135,7 +135,7 @@ interface OrgState {
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
 
-  addPersonNode: (parentId?: string, position?: { x: number; y: number }, initialData?: Partial<OrgPersonData>, updateParentCount?: boolean) => void
+  addPersonNode: (parentId?: string, position?: { x: number; y: number }, initialData?: Partial<OrgPersonData>) => void
   insertPersonAboveNode: (targetNodeId: string, initialData?: Partial<OrgPersonData>) => string
   addUnitNode: (parentId?: string, position?: { x: number; y: number }) => void
   updateNode: (id: string, data: Partial<OrgNodeData>) => void
@@ -221,38 +221,20 @@ export const useOrgStore = create<OrgState>((set, get) => ({
     })),
 
   onConnect: connection =>
-    set(state => {
-      const sourceNode = state.nodes.find(n => n.id === connection.source)
-      const targetNode = state.nodes.find(n => n.id === connection.target)
-      const isPersonUnderUnit =
-        sourceNode?.data.kind === 'org-unit' && targetNode?.data.kind === 'person'
+    set(state => ({
+      edges: addEdge(
+        {
+          ...connection,
+          type: 'smoothstep',
+          animated: true,
+          data: { relationshipType: 'reports-to' },
+        },
+        state.edges,
+      ) as OrgEdge[],
+      isDirty: true,
+    })),
 
-      const nodes = isPersonUnderUnit
-        ? state.nodes.map(n => {
-            if (n.id === connection.source) {
-              const d = n.data as OrgUnitData
-              return { ...n, data: { ...d, memberCount: (d.memberCount ?? 0) + 1 } }
-            }
-            return n
-          })
-        : state.nodes
-
-      return {
-        nodes,
-        edges: addEdge(
-          {
-            ...connection,
-            type: 'smoothstep',
-            animated: true,
-            data: { relationshipType: 'reports-to' },
-          },
-          state.edges,
-        ) as OrgEdge[],
-        isDirty: true,
-      }
-    }),
-
-  addPersonNode: (parentId, position, initialData, updateParentCount = true) => {
+  addPersonNode: (parentId, position, initialData) => {
     const id = generateId()
     const parentNode = parentId ? get().nodes.find(n => n.id === parentId) : null
     const nodePosition =
@@ -275,18 +257,8 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       },
     }
 
-    const shouldIncrementCount = updateParentCount && parentNode?.data.kind === 'org-unit'
-
     set(state => ({
-      nodes: shouldIncrementCount
-        ? state.nodes.map(n => {
-            if (n.id === parentId) {
-              const d = n.data as OrgUnitData
-              return { ...n, data: { ...d, memberCount: (d.memberCount ?? 0) + 1 } }
-            }
-            return n
-          }).concat(newNode)
-        : [...state.nodes, newNode],
+      nodes: [...state.nodes, newNode],
       edges: parentId
         ? [
             ...state.edges,
@@ -409,31 +381,12 @@ export const useOrgStore = create<OrgState>((set, get) => ({
     })),
 
   deleteNode: id =>
-    set(state => {
-      const target = state.nodes.find(n => n.id === id)
-      let nodes = state.nodes.filter(n => n.id !== id)
-
-      // If a person node is removed, decrement the parent org-unit's memberCount
-      if (target?.data.kind === 'person') {
-        const parentEdge = state.edges.find(e => e.target === id)
-        if (parentEdge) {
-          nodes = nodes.map(n => {
-            if (n.id === parentEdge.source && n.data.kind === 'org-unit') {
-              const d = n.data as OrgUnitData
-              return { ...n, data: { ...d, memberCount: Math.max(0, (d.memberCount ?? 0) - 1) } }
-            }
-            return n
-          })
-        }
-      }
-
-      return {
-        nodes,
-        edges: state.edges.filter(e => e.source !== id && e.target !== id),
-        selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
-        isDirty: true,
-      }
-    }),
+    set(state => ({
+      nodes: state.nodes.filter(n => n.id !== id),
+      edges: state.edges.filter(e => e.source !== id && e.target !== id),
+      selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
+      isDirty: true,
+    })),
 
   toggleCollapse: id =>
     set(state => {
@@ -469,77 +422,26 @@ export const useOrgStore = create<OrgState>((set, get) => ({
     }),
 
   reconnectEdge: (oldEdgeId, newConnection) =>
-    set(state => {
-      const oldEdge = state.edges.find(e => e.id === oldEdgeId)
-      const oldSource = oldEdge ? state.nodes.find(n => n.id === oldEdge.source) : null
-      const oldTarget = oldEdge ? state.nodes.find(n => n.id === oldEdge.target) : null
-      const newSource = state.nodes.find(n => n.id === newConnection.source)
-      const newTarget = state.nodes.find(n => n.id === newConnection.target)
-
-      let nodes = state.nodes
-
-      // Decrement old org-unit if the old connection was org-unit → person
-      if (oldSource?.data.kind === 'org-unit' && oldTarget?.data.kind === 'person') {
-        nodes = nodes.map(n => {
-          if (n.id === oldSource.id) {
-            const d = n.data as OrgUnitData
-            return { ...n, data: { ...d, memberCount: Math.max(0, (d.memberCount ?? 0) - 1) } }
-          }
-          return n
-        })
-      }
-
-      // Increment new org-unit if the new connection is org-unit → person
-      if (newSource?.data.kind === 'org-unit' && newTarget?.data.kind === 'person') {
-        nodes = nodes.map(n => {
-          if (n.id === newSource.id) {
-            const d = n.data as OrgUnitData
-            return { ...n, data: { ...d, memberCount: (d.memberCount ?? 0) + 1 } }
-          }
-          return n
-        })
-      }
-
-      return {
-        nodes,
-        edges: state.edges.map(e =>
-          e.id === oldEdgeId
-            ? {
-                ...e,
-                source: newConnection.source,
-                target: newConnection.target,
-                sourceHandle: newConnection.sourceHandle ?? null,
-                targetHandle: newConnection.targetHandle ?? null,
-              }
-            : e,
-        ),
-        isDirty: true,
-      }
-    }),
+    set(state => ({
+      edges: state.edges.map(e =>
+        e.id === oldEdgeId
+          ? {
+              ...e,
+              source: newConnection.source,
+              target: newConnection.target,
+              sourceHandle: newConnection.sourceHandle ?? null,
+              targetHandle: newConnection.targetHandle ?? null,
+            }
+          : e,
+      ),
+      isDirty: true,
+    })),
 
   deleteEdge: id =>
-    set(state => {
-      const edge = state.edges.find(e => e.id === id)
-      const sourceNode = edge ? state.nodes.find(n => n.id === edge.source) : null
-      const targetNode = edge ? state.nodes.find(n => n.id === edge.target) : null
-
-      const nodes =
-        sourceNode?.data.kind === 'org-unit' && targetNode?.data.kind === 'person'
-          ? state.nodes.map(n => {
-              if (n.id === sourceNode.id) {
-                const d = n.data as OrgUnitData
-                return { ...n, data: { ...d, memberCount: Math.max(0, (d.memberCount ?? 0) - 1) } }
-              }
-              return n
-            })
-          : state.nodes
-
-      return {
-        nodes,
-        edges: state.edges.filter(e => e.id !== id),
-        isDirty: true,
-      }
-    }),
+    set(state => ({
+      edges: state.edges.filter(e => e.id !== id),
+      isDirty: true,
+    })),
 
   connectNodes: (parentId, childId) =>
     set(state => ({
@@ -562,27 +464,8 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       const selectedNodeIds = new Set(state.nodes.filter(n => n.selected).map(n => n.id))
       const selectedEdgeIds = new Set(state.edges.filter(e => e.selected).map(e => e.id))
       if (selectedNodeIds.size === 0 && selectedEdgeIds.size === 0) return state
-
-      // Decrement memberCount for each org-unit that loses a person child
-      let nodes = state.nodes
-      for (const id of selectedNodeIds) {
-        const target = state.nodes.find(n => n.id === id)
-        if (target?.data.kind === 'person') {
-          const parentEdge = state.edges.find(e => e.target === id)
-          if (parentEdge && !selectedNodeIds.has(parentEdge.source)) {
-            nodes = nodes.map(n => {
-              if (n.id === parentEdge.source && n.data.kind === 'org-unit') {
-                const d = n.data as OrgUnitData
-                return { ...n, data: { ...d, memberCount: Math.max(0, (d.memberCount ?? 0) - 1) } }
-              }
-              return n
-            })
-          }
-        }
-      }
-
       return {
-        nodes: nodes.filter(n => !selectedNodeIds.has(n.id)),
+        nodes: state.nodes.filter(n => !selectedNodeIds.has(n.id)),
         edges: state.edges.filter(
           e => !selectedEdgeIds.has(e.id) && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target),
         ),

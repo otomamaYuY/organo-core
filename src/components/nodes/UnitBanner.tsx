@@ -1,4 +1,4 @@
-import { Building2, Users, ChevronDown } from 'lucide-react'
+import { Building2, Users, Building, ChevronDown } from 'lucide-react'
 import type { OrgUnitData, OrgUnitType } from '@/types'
 import { NODE_W, NODE_H } from '@/utils/nodeSize'
 import { useT } from '@/hooks/useT'
@@ -29,9 +29,11 @@ const UNIT_LABEL_KEY: Record<OrgUnitType, TranslationKey> = {
 interface UnitBannerProps {
   data: OrgUnitData
   selected: boolean
+  personChildCount: number
+  unitChildCount: number
 }
 
-export function UnitBanner({ data, selected }: UnitBannerProps) {
+export function UnitBanner({ data, selected, personChildCount, unitChildCount }: UnitBannerProps) {
   const vars = UNIT_VARS[data.unitType]
   const t = useT()
 
@@ -101,7 +103,7 @@ export function UnitBanner({ data, selected }: UnitBannerProps) {
           >
             {t(UNIT_LABEL_KEY[data.unitType])}
           </span>
-          {data.memberCount != null && (
+          {personChildCount > 0 && (
             <span
               style={{
                 color: 'var(--text-3)',
@@ -112,7 +114,21 @@ export function UnitBanner({ data, selected }: UnitBannerProps) {
               }}
             >
               <Users size={10} />
-              {data.memberCount}
+              {personChildCount}
+            </span>
+          )}
+          {unitChildCount > 0 && (
+            <span
+              style={{
+                color: 'var(--text-3)',
+                fontSize: 11,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+              }}
+            >
+              <Building size={10} />
+              {unitChildCount}
             </span>
           )}
         </div>
