@@ -518,10 +518,28 @@ export const useOrgStore = create<OrgState>((set, get) => ({
     }),
 
   deleteEdge: id =>
-    set(state => ({
-      edges: state.edges.filter(e => e.id !== id),
-      isDirty: true,
-    })),
+    set(state => {
+      const edge = state.edges.find(e => e.id === id)
+      const sourceNode = edge ? state.nodes.find(n => n.id === edge.source) : null
+      const targetNode = edge ? state.nodes.find(n => n.id === edge.target) : null
+
+      const nodes =
+        sourceNode?.data.kind === 'org-unit' && targetNode?.data.kind === 'person'
+          ? state.nodes.map(n => {
+              if (n.id === sourceNode.id) {
+                const d = n.data as OrgUnitData
+                return { ...n, data: { ...d, memberCount: Math.max(0, (d.memberCount ?? 0) - 1) } }
+              }
+              return n
+            })
+          : state.nodes
+
+      return {
+        nodes,
+        edges: state.edges.filter(e => e.id !== id),
+        isDirty: true,
+      }
+    }),
 
   connectNodes: (parentId, childId) =>
     set(state => ({
