@@ -223,10 +223,13 @@ export const translations = {
     ja: '（既存の子ノード {{existing}} 件を除いた差分）',
     en: '({{existing}} existing child node(s) excluded)',
   },
-  generateMembersCount: { ja: '生成する人数', en: 'Count to generate' },
+  generateMembersNodeType: { ja: 'ノード種別', en: 'Node type' },
+  generateMembersTypePerson: { ja: '人物ノード', en: 'Person nodes' },
+  generateMembersTypeUnit: { ja: '組織ノード', en: 'Org unit nodes' },
+  generateMembersCount: { ja: '生成する数', en: 'Count to generate' },
   generateMembersConfirm: { ja: '生成する', en: 'Generate' },
   generateMembersSkip: { ja: 'スキップ', en: 'Skip' },
-  generateMembersToast: { ja: '{{count}} 名のメンバーノードを追加しました', en: 'Added {{count}} member node(s)' },
+  generateMembersToast: { ja: '{{count}} 件のノードを追加しました', en: 'Added {{count}} node(s)' },
 } as const satisfies Record<string, Record<Locale, string>>
 
 export type TranslationKey = keyof typeof translations

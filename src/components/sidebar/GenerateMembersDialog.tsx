@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Users } from 'lucide-react'
+import { Users, Building2 } from 'lucide-react'
 import { useT } from '@/hooks/useT'
+import type { NodeKind } from '@/types'
+
+export type GenerateNodeKind = Extract<NodeKind, 'person' | 'org-unit'>
 
 interface GenerateMembersDialogProps {
   unitName: string
   suggestedCount: number
   existingCount: number
-  onConfirm: (count: number) => void
+  onConfirm: (count: number, kind: GenerateNodeKind) => void
   onSkip: () => void
 }
 
@@ -19,6 +22,7 @@ export function GenerateMembersDialog({
 }: GenerateMembersDialogProps) {
   const t = useT()
   const [count, setCount] = useState(suggestedCount)
+  const [kind, setKind] = useState<GenerateNodeKind>('person')
 
   const desc = t('generateMembersDesc')
     .replace('{{unit}}', unitName)
@@ -53,14 +57,7 @@ export function GenerateMembersDialog({
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 14,
-          }}
-        >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <div
             style={{
               width: 32,
@@ -82,45 +79,70 @@ export function GenerateMembersDialog({
         </div>
 
         {/* Description */}
-        <div
-          style={{
-            color: 'var(--text-2)',
-            fontSize: 13,
-            lineHeight: 1.6,
-            marginBottom: existingNote ? 4 : 16,
-          }}
-        >
+        <div style={{ color: 'var(--text-2)', fontSize: 13, lineHeight: 1.6, marginBottom: existingNote ? 4 : 16 }}>
           {desc}
         </div>
         {existingNote && (
-          <div
-            style={{
-              color: 'var(--text-3)',
-              fontSize: 11,
-              marginBottom: 16,
-            }}
-          >
+          <div style={{ color: 'var(--text-3)', fontSize: 11, marginBottom: 16 }}>
             {existingNote}
           </div>
         )}
 
-        {/* Count stepper */}
-        <div style={{ marginBottom: 20 }}>
+        {/* Node type toggle */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+            {t('generateMembersNodeType')}
+          </div>
           <div
             style={{
-              color: 'var(--text-2)',
-              fontSize: 12,
-              fontWeight: 600,
-              marginBottom: 6,
+              display: 'flex',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              padding: 3,
+              gap: 3,
             }}
           >
+            {(['person', 'org-unit'] as GenerateNodeKind[]).map((k) => {
+              const active = kind === k
+              const Icon = k === 'person' ? Users : Building2
+              const label = k === 'person' ? t('generateMembersTypePerson') : t('generateMembersTypeUnit')
+              return (
+                <button
+                  key={k}
+                  onClick={() => setKind(k)}
+                  style={{
+                    flex: 1,
+                    height: 32,
+                    borderRadius: 6,
+                    border: active ? '1px solid var(--accent-border)' : '1px solid transparent',
+                    background: active ? 'var(--accent-bg)' : 'transparent',
+                    color: active ? 'var(--accent-text)' : 'var(--text-3)',
+                    fontSize: 12,
+                    fontWeight: active ? 600 : 400,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 5,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <Icon size={13} />
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Count stepper */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
             {t('generateMembersCount')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => setCount((c) => Math.max(1, c - 1))}
-              style={stepperBtnStyle}
-            >
+            <button onClick={() => setCount((c) => Math.max(1, c - 1))} style={stepperBtnStyle}>
               −
             </button>
             <input
@@ -132,17 +154,9 @@ export function GenerateMembersDialog({
                 const v = parseInt(e.target.value, 10)
                 if (!isNaN(v) && v >= 1 && v <= 100) setCount(v)
               }}
-              style={{
-                width: 64,
-                textAlign: 'center',
-                fontWeight: 600,
-                fontSize: 15,
-              }}
+              style={{ width: 64, textAlign: 'center', fontWeight: 600, fontSize: 15 }}
             />
-            <button
-              onClick={() => setCount((c) => Math.min(100, c + 1))}
-              style={stepperBtnStyle}
-            >
+            <button onClick={() => setCount((c) => Math.min(100, c + 1))} style={stepperBtnStyle}>
               ＋
             </button>
           </div>
@@ -151,7 +165,7 @@ export function GenerateMembersDialog({
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={() => onConfirm(count)}
+            onClick={() => onConfirm(count, kind)}
             style={{
               flex: 1,
               height: 36,
@@ -168,7 +182,7 @@ export function GenerateMembersDialog({
               gap: 6,
             }}
           >
-            <Users size={13} />
+            {kind === 'person' ? <Users size={13} /> : <Building2 size={13} />}
             {t('generateMembersConfirm')}
           </button>
           <button

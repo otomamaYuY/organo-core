@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react'
 import { useOrgStore } from '@/store/useOrgStore'
 import { PersonEditForm } from './PersonEditForm'
 import { UnitEditForm } from './UnitEditForm'
-import { GenerateMembersDialog } from './GenerateMembersDialog'
+import { GenerateMembersDialog, type GenerateNodeKind } from './GenerateMembersDialog'
 import { toast } from '@/store/useToastStore'
 import type { OrgNodeData, OrgPersonData, OrgUnitData } from '@/types'
 import { useT } from '@/hooks/useT'
@@ -16,7 +16,7 @@ interface PendingGenerate {
 }
 
 export function Sidebar() {
-  const { nodes, edges, selectedNodeId, updateNode, deleteNode, addPersonNode, applyAutoLayout, selectNode } = useOrgStore()
+  const { nodes, edges, selectedNodeId, updateNode, deleteNode, addPersonNode, addUnitNode, applyAutoLayout, selectNode } = useOrgStore()
   const selectedNode = nodes.find(n => n.id === selectedNodeId)
   const visible = !!selectedNode
   const t = useT()
@@ -33,10 +33,14 @@ export function Sidebar() {
     }
   }
 
-  const handleGenerateConfirm = (count: number) => {
+  const handleGenerateConfirm = (count: number, kind: GenerateNodeKind) => {
     if (!pendingGenerate) return
     for (let i = 0; i < count; i++) {
-      addPersonNode(pendingGenerate.unitId)
+      if (kind === 'person') {
+        addPersonNode(pendingGenerate.unitId)
+      } else {
+        addUnitNode(pendingGenerate.unitId)
+      }
     }
     applyAutoLayout()
     selectNode(pendingGenerate.unitId)
