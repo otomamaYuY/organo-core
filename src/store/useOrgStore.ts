@@ -281,11 +281,17 @@ export const useOrgStore = create<OrgState>((set, get) => ({
         ? { x: parentNode.position.x + 50, y: parentNode.position.y + 150 }
         : { x: 200, y: 200 })
 
+    const parentHeadName =
+      parentNode?.data.kind === 'person' ? parentNode.data.name : undefined
+
     const newNode: OrgNode = {
       id,
       type: 'orgNode',
       position: nodePosition,
-      data: { ...DEFAULT_UNIT },
+      data: {
+        ...DEFAULT_UNIT,
+        ...(parentHeadName ? { headPersonName: parentHeadName } : {}),
+      },
     }
 
     set(state => ({
