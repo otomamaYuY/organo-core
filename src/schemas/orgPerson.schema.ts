@@ -27,7 +27,10 @@ export function createOrgPersonSchema(locale: Locale) {
       .regex(/^\+?[0-9\-]+$/, t('validPhoneFormat', locale))
       .optional()
       .or(z.literal('')),
-    employmentType: z.enum(['full-time', 'part-time', 'contract', 'intern', 'advisor']).optional(),
+    employmentType: z
+      .enum(['full-time', 'part-time', 'contract', 'intern', 'advisor'])
+      .or(z.literal(''))
+      .optional(),
     tags: z.array(z.string().max(30)).max(10).optional(),
   })
 }

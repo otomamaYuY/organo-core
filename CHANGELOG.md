@@ -4,6 +4,41 @@ All notable changes to **organo-core** are documented in this file.
 
 ---
 
+## [v1.5.0] — 2026-04-05
+
+### New Features
+
+#### Member Count Syncs Automatically with Drag-and-Drop
+The **Member Count** field on org-unit nodes now stays accurate without manual updates:
+- **Add via drag-and-drop** — connecting a person node to an org unit by dragging from a handle increments the unit's member count by one.
+- **Delete a person** — removing a person node that belongs to an org unit decrements the unit's member count (floor 0). Works for single deletion, multi-select deletion, and keyboard Delete.
+- **Reconnect an edge** — dragging an existing edge from one org unit to another transfers the count: the old parent decrements and the new parent increments.
+
+#### Head Person Is Now Placed Above the Org Unit
+Setting a **Head Person** name on an org-unit node and saving now inserts the person node as the **direct parent** of the org unit (between the org unit and its grandparent), reflecting real-world leadership hierarchy. Previously the person was created as a child beneath the unit. The insertion is idempotent: if a person node with the same name is already the immediate parent, no duplicate is created.
+
+### Bug Fixes
+
+#### Auto-Create Dialog Showed Wrong Node Kind When Both Counts Were Set
+When both **Child Unit Count** and **Member Count** were filled and saved, only the org-unit auto-create dialog appeared; the person auto-create dialog was silently skipped. Root cause: `handleUnitSave` returned early after queuing the first dialog, so the second was never reached. Fixed by building a full queue of pending dialogs and advancing through them one at a time — confirming or skipping one dialog now shows the next.
+
+#### Auto-Create Dialog Counter Did Not Reset Between Dialogs
+After confirming the org-unit auto-create dialog, the subsequent person dialog displayed the org-unit count instead of the person count. Root cause: React reused the same `GenerateMembersDialog` instance, so `useState(suggestedCount)` was not re-initialised. Fixed by adding a `key` prop tied to `unitId + kind`, forcing a remount with the correct initial count each time the dialog changes.
+
+#### Auto-Create Dialog Showed Stale Unit Name
+The unit name displayed inside the auto-create dialog reflected the name before the current edit rather than the newly typed name. Fixed by reading the name from the submitted form `values` instead of the closed-over `selectedNode.data`.
+
+#### Save Button Was Always Disabled on Initial Load
+Using `mode: 'onChange'` in react-hook-form means `isValid` starts as `false` and resets to `false` after every `reset()` call, so the save button was permanently disabled until the user touched a field — even when all values were already valid. Fixed by changing the disabled condition from `!isValid` to `Object.keys(errors).length > 0`: the button is enabled while no validation errors are actively shown, and disables only when the user introduces an invalid value.
+
+#### Clearing a Number Field Blocked the Save Button
+Selecting all text in the **Member Count** or **Child Unit Count** field and typing a new value momentarily clears the input, causing `valueAsNumber` to produce `NaN`. Zod's `z.number()` rejects `NaN`, which triggered an error and disabled the save button mid-keystroke. Fixed by accepting `NaN` in the schema via `z.union([z.number()…, z.nan().transform(() => 0)])`, coercing any `NaN` to `0`.
+
+#### Empty Employment Type Blocked Saving Person Nodes
+The Employment Type select includes a blank placeholder option (value `""`). When a person node had no employment type set, the placeholder was selected by default. Submitting with `""` failed Zod's `z.enum()` check, preventing the save. Fixed by extending the schema with `.or(z.literal(''))` and stripping the empty string to `undefined` before persisting.
+
+---
+
 ## [v1.4.0] — 2025-04-05
 
 ### New Features

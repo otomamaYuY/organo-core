@@ -18,8 +18,14 @@ export function createOrgUnitSchema(locale: Locale) {
       'post',
     ]),
     headPersonName: z.string().max(100).optional().or(z.literal('')),
-    memberCount: z.number().int().nonnegative().optional(),
-    childUnitCount: z.number().int().nonnegative().optional(),
+    memberCount: z.union([
+      z.number().int().nonnegative(),
+      z.nan().transform((): number => 0),
+    ]).optional(),
+    childUnitCount: z.union([
+      z.number().int().nonnegative(),
+      z.nan().transform((): number => 0),
+    ]).optional(),
     description: z.string().max(500).optional().or(z.literal('')),
     tags: z.array(z.string().max(30)).max(10).optional(),
   })

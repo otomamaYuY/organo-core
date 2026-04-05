@@ -46,7 +46,7 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
     setValue,
     control,
     reset,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<OrgUnitFormValues>({
     resolver: zodResolver(createOrgUnitSchema(locale)),
     mode: 'onChange',
@@ -74,6 +74,7 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
   }, [data, reset])
 
   const tags = useWatch({ control, name: 'tags' }) ?? []
+  const hasErrors = Object.keys(errors).length > 0
 
   const reg = (name: keyof OrgUnitFormValues) => {
     const { onChange, ...rest } = register(name as any)
@@ -150,16 +151,16 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
       <button
         data-testid="btn-save-unit"
         type="submit"
-        disabled={!isValid}
+        disabled={hasErrors}
         style={{
-          background: isValid ? 'var(--accent)' : 'var(--surface-3)',
-          color: isValid ? '#fff' : 'var(--text-3)',
+          background: !hasErrors ? 'var(--accent)' : 'var(--surface-3)',
+          color: !hasErrors ? '#fff' : 'var(--text-3)',
           border: 'none',
           borderRadius: 7,
           height: 36,
           padding: '0 14px',
           lineHeight: 1,
-          cursor: isValid ? 'pointer' : 'not-allowed',
+          cursor: !hasErrors ? 'pointer' : 'not-allowed',
           fontSize: 13,
           fontWeight: 600,
           display: 'flex',

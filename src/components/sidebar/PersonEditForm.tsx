@@ -50,7 +50,7 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     setValue,
     control,
     reset,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<OrgPersonFormValues>({
     resolver: zodResolver(createOrgPersonSchema(locale)),
     mode: 'onChange',
@@ -78,6 +78,7 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
   }, [data, reset])
 
   const tags = useWatch({ control, name: 'tags' }) ?? []
+  const hasErrors = Object.keys(errors).length > 0
 
   // Helper: wrap register's onChange with ASCII filter in EN mode
   const reg = (name: keyof OrgPersonFormValues) => {
@@ -107,7 +108,13 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
 
   return (
     <form
-      onSubmit={handleSubmit(values => onSave({ kind: 'person', ...values }))}
+      onSubmit={handleSubmit(({ employmentType, ...rest }) =>
+        onSave({
+          kind: 'person',
+          ...rest,
+          employmentType: (employmentType || undefined) as OrgPersonData['employmentType'],
+        })
+      )}
       style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
     >
       <div>
@@ -166,16 +173,16 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
       <button
         data-testid="btn-save-person"
         type="submit"
-        disabled={!isValid}
+        disabled={hasErrors}
         style={{
-          background: isValid ? 'var(--accent)' : 'var(--surface-3)',
-          color: isValid ? '#fff' : 'var(--text-3)',
+          background: !hasErrors ? 'var(--accent)' : 'var(--surface-3)',
+          color: !hasErrors ? '#fff' : 'var(--text-3)',
           border: 'none',
           borderRadius: 7,
           height: 36,
           padding: '0 14px',
           lineHeight: 1,
-          cursor: isValid ? 'pointer' : 'not-allowed',
+          cursor: !hasErrors ? 'pointer' : 'not-allowed',
           fontSize: 13,
           fontWeight: 600,
           display: 'flex',

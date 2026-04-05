@@ -18,12 +18,13 @@ interface PendingGenerate {
 }
 
 export function Sidebar() {
-  const { nodes, edges, selectedNodeId, updateNode, deleteNode, addPersonNode, addUnitNode, applyAutoLayout, selectNode } = useOrgStore()
+  const { nodes, edges, selectedNodeId, updateNode, deleteNode, addPersonNode, insertPersonAboveNode, addUnitNode, applyAutoLayout, selectNode } = useOrgStore()
   const selectedNode = nodes.find(n => n.id === selectedNodeId)
   const visible = !!selectedNode
   const t = useT()
   const locale = useLocaleStore(s => s.locale)
-  const [pendingGenerate, setPendingGenerate] = useState<PendingGenerate | null>(null)
+  const [generateQueue, setGenerateQueue] = useState<PendingGenerate[]>([])
+  const pendingGenerate = generateQueue[0] ?? null
 
   const handleUnitSave = (unitId: string, unitName: string, values: Partial<OrgNodeData>) => {
     updateNode(unitId, values)
@@ -31,29 +32,26 @@ export function Sidebar() {
     const memberCount = unitData.memberCount ?? 0
     const childUnitCount = unitData.childUnitCount ?? 0
 
-    // headPersonName: auto-add person node under parent org unit if not already present.
+    // headPersonName: insert a person node as the direct parent of this org unit (representing the head).
     // Read from getState() to get the latest store state, bypassing the stale React closure.
     const headName = unitData.headPersonName?.trim()
     if (headName) {
       const { nodes: n0, edges: e0 } = useOrgStore.getState()
+      // Find the current parent of this unit (could be a person already placed there)
       const parentEdge = e0.find(e => e.target === unitId)
       const parentNode = parentEdge ? n0.find(n => n.id === parentEdge.source) : null
-      if (parentNode) {
-        const alreadyExists = n0.some(
-          n =>
-            n.data.kind === 'person' &&
-            (n.data as OrgPersonData).name === headName &&
-            e0.some(e => e.source === parentNode.id && e.target === n.id),
-        )
-        if (!alreadyExists) {
-          addPersonNode(parentNode.id, undefined, { name: headName })
-        }
+      const alreadyHeadAbove =
+        parentNode?.data.kind === 'person' &&
+        (parentNode.data as OrgPersonData).name === headName
+      if (!alreadyHeadAbove) {
+        insertPersonAboveNode(unitId, { name: headName })
       }
     }
 
-    // childUnitCount takes priority; fallback to memberCount.
+    // Build a queue of all needed auto-generate dialogs.
     // Use getState() for fresh counts after updateNode.
     const { nodes: n1, edges: e1 } = useOrgStore.getState()
+    const queue: PendingGenerate[] = []
 
     if (childUnitCount > 0) {
       const existingUnitChildren = e1.filter(e => {
@@ -63,8 +61,7 @@ export function Sidebar() {
       }).length
       const toGenerate = Math.max(0, childUnitCount - existingUnitChildren)
       if (toGenerate > 0) {
-        setPendingGenerate({ unitId, unitName, count: toGenerate, existingCount: existingUnitChildren, kind: 'org-unit' })
-        return
+        queue.push({ unitId, unitName, count: toGenerate, existingCount: existingUnitChildren, kind: 'org-unit' })
       }
     }
 
@@ -76,9 +73,11 @@ export function Sidebar() {
       }).length
       const toGenerate = Math.max(0, memberCount - existingPersonChildren)
       if (toGenerate > 0) {
-        setPendingGenerate({ unitId, unitName, count: toGenerate, existingCount: existingPersonChildren, kind: 'person' })
+        queue.push({ unitId, unitName, count: toGenerate, existingCount: existingPersonChildren, kind: 'person' })
       }
     }
+
+    setGenerateQueue(queue)
   }
 
   const handleGenerateConfirm = (count: number) => {
@@ -93,7 +92,11 @@ export function Sidebar() {
     applyAutoLayout()
     selectNode(pendingGenerate.unitId)
     toast.success(t('generateMembersToast').replace('{{count}}', String(count)))
-    setPendingGenerate(null)
+    setGenerateQueue(q => q.slice(1))
+  }
+
+  const handleGenerateSkip = () => {
+    setGenerateQueue(q => q.slice(1))
   }
 
   return (
@@ -175,7 +178,7 @@ export function Sidebar() {
                 onSave={values =>
                   handleUnitSave(
                     selectedNode.id,
-                    (selectedNode.data as OrgUnitData).unitName,
+                    (values as OrgUnitData).unitName || (selectedNode.data as OrgUnitData).unitName,
                     values as Partial<OrgNodeData>,
                   )
                 }
@@ -188,12 +191,13 @@ export function Sidebar() {
 
     {pendingGenerate && (
       <GenerateMembersDialog
+        key={`${pendingGenerate.unitId}-${pendingGenerate.kind}`}
         unitName={pendingGenerate.unitName}
         suggestedCount={pendingGenerate.count}
         existingCount={pendingGenerate.existingCount}
         kind={pendingGenerate.kind}
         onConfirm={handleGenerateConfirm}
-        onSkip={() => setPendingGenerate(null)}
+        onSkip={handleGenerateSkip}
       />
     )}
     </>
