@@ -81,7 +81,7 @@ export const useLlmSettingsStore = create<LlmSettingsState>((set, get) => ({
 
   clearAll: () => {
     localStorage.removeItem(STORAGE_KEY)
-    set({ provider: 'bedrock', bedrock: defaultBedrock, openai: defaultOpenai, azureOpenai: defaultAzureOpenai })
+    set({ provider: 'openai', bedrock: defaultBedrock, openai: defaultOpenai, azureOpenai: defaultAzureOpenai })
   },
 
   isConfigured: () => {

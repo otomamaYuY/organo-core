@@ -37,7 +37,7 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
     setBedrock({ accessKeyId: '', secretAccessKey: '', region: 'us-east-1' })
     setOpenai({ apiKey: '' })
     setAzureOpenai({ apiKey: '', endpoint: '' })
-    setProvider('bedrock')
+    setProvider('openai')
     showToast(t('settingsCleared'))
   }
 
