@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff, Trash2, Check } from 'lucide-react'
 import { useLlmSettingsStore, type LlmProvider } from '@/store/useLlmSettingsStore'
+import { toast } from '@/store/useToastStore'
 import { useT } from '@/hooks/useT'
 
 interface LlmSettingsModalProps {
@@ -15,21 +16,14 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
   const [bedrock, setBedrock] = useState({ ...store.bedrock })
   const [openai, setOpenai] = useState({ ...store.openai })
   const [azureOpenai, setAzureOpenai] = useState({ ...store.azureOpenai })
-  const [toast, setToast] = useState<string | null>(null)
-
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2000)
-  }
-
   const handleSave = () => {
     store.setProvider(provider)
     store.updateBedrock(bedrock)
     store.updateOpenai(openai)
     store.updateAzureOpenai(azureOpenai)
     store.saveToStorage()
-    showToast(t('settingsSaved'))
-    setTimeout(onClose, 600)
+    toast.success(t('settingsSaved'))
+    onClose()
   }
 
   const handleClear = () => {
@@ -38,7 +32,7 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
     setOpenai({ apiKey: '' })
     setAzureOpenai({ apiKey: '', endpoint: '' })
     setProvider('openai')
-    showToast(t('settingsCleared'))
+    toast.success(t('settingsCleared'))
   }
 
   return (
@@ -200,24 +194,6 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
           </button>
         </div>
 
-        {/* Toast */}
-        {toast && (
-          <div
-            style={{
-              marginTop: 12,
-              padding: '8px 12px',
-              background: 'var(--success-bg)',
-              border: '1px solid var(--success)',
-              borderRadius: 6,
-              color: 'var(--success)',
-              fontSize: 12,
-              fontWeight: 500,
-              textAlign: 'center',
-            }}
-          >
-            {toast}
-          </div>
-        )}
       </div>
     </div>
   )
