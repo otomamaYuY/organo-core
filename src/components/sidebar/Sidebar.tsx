@@ -29,28 +29,34 @@ export function Sidebar() {
     const memberCount = unitData.memberCount ?? 0
     const childUnitCount = unitData.childUnitCount ?? 0
 
-    // headPersonName: auto-add person node under parent org unit if not already present
+    // headPersonName: auto-add person node under parent org unit if not already present.
+    // Read from getState() to get the latest store state, bypassing the stale React closure.
     const headName = unitData.headPersonName?.trim()
     if (headName) {
-      const parentEdge = edges.find(e => e.target === unitId)
-      const parentNode = parentEdge ? nodes.find(n => n.id === parentEdge.source) : null
+      const { nodes: n0, edges: e0 } = useOrgStore.getState()
+      const parentEdge = e0.find(e => e.target === unitId)
+      const parentNode = parentEdge ? n0.find(n => n.id === parentEdge.source) : null
       if (parentNode) {
-        const alreadyExists = edges.some(e => {
-          if (e.source !== parentNode.id) return false
-          const child = nodes.find(n => n.id === e.target)
-          return child?.data.kind === 'person' && (child.data as OrgPersonData).name === headName
-        })
+        const alreadyExists = n0.some(
+          n =>
+            n.data.kind === 'person' &&
+            (n.data as OrgPersonData).name === headName &&
+            e0.some(e => e.source === parentNode.id && e.target === n.id),
+        )
         if (!alreadyExists) {
           addPersonNode(parentNode.id, undefined, { name: headName })
         }
       }
     }
 
-    // childUnitCount takes priority; fallback to memberCount
+    // childUnitCount takes priority; fallback to memberCount.
+    // Use getState() for fresh counts after updateNode.
+    const { nodes: n1, edges: e1 } = useOrgStore.getState()
+
     if (childUnitCount > 0) {
-      const existingUnitChildren = edges.filter(e => {
+      const existingUnitChildren = e1.filter(e => {
         if (e.source !== unitId) return false
-        const targetNode = nodes.find(n => n.id === e.target)
+        const targetNode = n1.find(n => n.id === e.target)
         return targetNode?.data.kind === 'org-unit'
       }).length
       const toGenerate = Math.max(0, childUnitCount - existingUnitChildren)
@@ -61,9 +67,9 @@ export function Sidebar() {
     }
 
     if (memberCount > 0) {
-      const existingPersonChildren = edges.filter(e => {
+      const existingPersonChildren = e1.filter(e => {
         if (e.source !== unitId) return false
-        const targetNode = nodes.find(n => n.id === e.target)
+        const targetNode = n1.find(n => n.id === e.target)
         return targetNode?.data.kind === 'person'
       }).length
       const toGenerate = Math.max(0, memberCount - existingPersonChildren)
