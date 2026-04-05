@@ -7,11 +7,17 @@ import {
   Sun,
   Moon,
   FilePlus,
+  Settings,
+  ImagePlus,
 } from 'lucide-react'
 import { SearchBar } from './SearchBar'
 import { SaveStatus } from './SaveStatus'
 import { useRef, useState } from 'react'
 import { ExportModal } from '@/components/export/ExportModal'
+import { LlmSettingsModal } from '@/components/settings/LlmSettingsModal'
+import { AiImportModal } from '@/components/import/AiImportModal'
+import { ImportPreview } from '@/components/import/ImportPreview'
+import { useAiImport } from '@/hooks/useAiImport'
 import { useOrgStore } from '@/store/useOrgStore'
 import { useThemeStore } from '@/store/useThemeStore'
 import { useLocaleStore } from '@/store/useLocaleStore'
@@ -19,6 +25,9 @@ import { useT } from '@/hooks/useT'
 
 export function Toolbar() {
   const [showExport, setShowExport] = useState(false)
+  const [showLlmSettings, setShowLlmSettings] = useState(false)
+  const [showAiImport, setShowAiImport] = useState(false)
+  const { phase, result, errorMessage, analyze, applyToChart, reset } = useAiImport()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const applyAutoLayout = useOrgStore(s => s.applyAutoLayout)
@@ -95,6 +104,16 @@ export function Toolbar() {
         </ToolbarBtn>
 
         <ToolbarBtn
+          onClick={() => setShowAiImport(true)}
+          title={t('aiImportBtn')}
+          tooltip={t('tooltipAiImport')}
+          accent
+        >
+          <ImagePlus size={14} />
+          {t('aiImportBtn')}
+        </ToolbarBtn>
+
+        <ToolbarBtn
           onClick={() => {
             if (window.confirm(t('newChartConfirm'))) resetToDefault()
           }}
@@ -142,6 +161,15 @@ export function Toolbar() {
 
         <SaveStatus />
 
+        {/* LLM Settings */}
+        <IconBtn
+          onClick={() => setShowLlmSettings(true)}
+          title={t('settingsTitle')}
+          tooltip={t('tooltipSettings')}
+        >
+          <Settings size={15} />
+        </IconBtn>
+
         {/* Language toggle */}
         <IconBtn
           onClick={toggleLocale}
@@ -164,6 +192,28 @@ export function Toolbar() {
       </div>
 
       {showExport && <ExportModal onClose={() => setShowExport(false)} />}
+      {showLlmSettings && <LlmSettingsModal onClose={() => setShowLlmSettings(false)} />}
+      {showAiImport && (
+        <AiImportModal
+          onClose={() => { reset(); setShowAiImport(false) }}
+          phase={phase}
+          errorMessage={errorMessage}
+          onAnalyze={analyze}
+          onReset={reset}
+          previewSlot={
+            phase === 'preview' ? (
+              <ImportPreview
+                persons={result}
+                onApply={(persons, mode) => {
+                  applyToChart(persons, mode)
+                  setShowAiImport(false)
+                }}
+                onBack={reset}
+              />
+            ) : undefined
+          }
+        />
+      )}
     </>
   )
 }

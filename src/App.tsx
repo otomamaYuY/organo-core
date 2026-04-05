@@ -19,6 +19,7 @@ import { OnboardingTour } from '@/components/onboarding/OnboardingTour'
 import { HelpButton } from '@/components/onboarding/HelpButton'
 import { LandingOverlay } from '@/components/LandingOverlay'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { ToastContainer } from '@/components/ui/ToastContainer'
 
 const nodeTypes = { orgNode: OrgNode }
 
@@ -172,6 +173,7 @@ export default function App() {
     >
       <LandingOverlay />
       <OnboardingTour />
+      <ToastContainer />
       <HelpButton />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Toolbar />

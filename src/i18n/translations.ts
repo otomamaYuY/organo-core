@@ -146,6 +146,70 @@ export const translations = {
     ja: '無料で始める',
     en: 'Start Free',
   },
+
+  // ── LLM Settings (Premium) ──────────────────────────
+  settingsTitle: { ja: 'AI設定（プレミアム）', en: 'AI Settings (Premium)' },
+  settingsProvider: { ja: 'LLMプロバイダ', en: 'LLM Provider' },
+  settingsProviderBedrock: { ja: 'Amazon Bedrock', en: 'Amazon Bedrock' },
+  settingsProviderOpenai: { ja: 'OpenAI', en: 'OpenAI' },
+  settingsProviderAzure: { ja: 'Azure OpenAI', en: 'Azure OpenAI' },
+  settingsAccessKeyId: { ja: 'AWS Access Key ID', en: 'AWS Access Key ID' },
+  settingsSecretAccessKey: { ja: 'Secret Access Key', en: 'Secret Access Key' },
+  settingsRegion: { ja: 'リージョン', en: 'Region' },
+  settingsApiKey: { ja: 'API Key', en: 'API Key' },
+  settingsEndpoint: { ja: 'エンドポイントURL', en: 'Endpoint URL' },
+  settingsSave: { ja: '保存', en: 'Save' },
+  settingsCancel: { ja: 'キャンセル', en: 'Cancel' },
+  settingsClear: { ja: '設定をクリア', en: 'Clear Settings' },
+  settingsSaved: { ja: '設定を保存しました', en: 'Settings saved' },
+  settingsCleared: { ja: '設定をクリアしました', en: 'Settings cleared' },
+  settingsSecurityNote: {
+    ja: '認証情報はブラウザのlocalStorageにのみ保存されます。',
+    en: 'Credentials are stored only in your browser localStorage.',
+  },
+  tooltipSettings: { ja: 'AI設定', en: 'AI Settings' },
+
+  // ── AI Image Import (Phase 2) ────────────────────────
+  aiImportBtn: { ja: 'AI画像インポート ✨', en: 'AI Image Import ✨' },
+  tooltipAiImport: { ja: '画像から組織図をAIで生成（プレミアム）', en: 'Generate org chart from image via AI (Premium)' },
+  aiImportTitle: { ja: 'AI画像インポート（プレミアム）', en: 'AI Image Import (Premium)' },
+  aiImportNeedsConfig: {
+    ja: 'この機能を使うにはLLMプロバイダの設定が必要です。',
+    en: 'Please configure your LLM provider to use this feature.',
+  },
+  aiImportGoToSettings: { ja: 'AI設定を開く', en: 'Open AI Settings' },
+  aiImportDropHere: { ja: 'ここに画像をドラッグ＆ドロップ、またはクリックして選択', en: 'Drag & drop image here, or click to select' },
+  aiImportPasteHint: { ja: 'Ctrl+V / Cmd+V でクリップボードから貼り付けも可能', en: 'Or paste from clipboard with Ctrl+V / Cmd+V' },
+  aiImportAnalyze: { ja: 'AIで組織図を解析 →', en: 'Analyze with AI →' },
+  aiImportChangeImage: { ja: '画像を変更', en: 'Change image' },
+  aiImportAnalyzing: { ja: 'AIが画像を解析中...', en: 'AI is analyzing the image...' },
+  aiImportAnalyzingHint: { ja: '数秒〜数十秒かかる場合があります', en: 'This may take a few seconds' },
+  aiImportRetry: { ja: 'もう一度試す', en: 'Try again' },
+
+  // ── AI Import Preview (Phase 4) ──────────────────────
+  previewTitle: { ja: '取り込み内容の確認・修正', en: 'Review & Edit Import' },
+  previewSubtitle: {
+    ja: 'AIが抽出した内容を確認してください。誤りがあれば直接修正できます。',
+    en: 'Review what AI extracted. You can edit any field before applying.',
+  },
+  previewColName: { ja: '氏名', en: 'Name' },
+  previewColRole: { ja: '役職', en: 'Role' },
+  previewColDept: { ja: '部署', en: 'Department' },
+  previewColParent: { ja: '上司', en: 'Reports To' },
+  previewColDelete: { ja: '削除', en: 'Delete' },
+  previewApply: { ja: '組織図に追加', en: 'Add to Chart' },
+  previewReplace: { ja: '現在の組織図と置換', en: 'Replace Current Chart' },
+  previewReplaceConfirm: {
+    ja: '現在の組織図を削除して置き換えますか？この操作は元に戻せません。',
+    en: 'Replace the current chart? This cannot be undone.',
+  },
+  previewBack: { ja: '← やり直す', en: '← Start Over' },
+  previewCount: { ja: '{{count}}名を抽出', en: '{{count}} people extracted' },
+  previewNone: { ja: '（なし・ルート）', en: '(None - Root)' },
+  toastApplied: { ja: '{{count}}名を組織図に追加しました', en: 'Added {{count}} people to the chart' },
+  toastReplaced: { ja: '組織図を{{count}}名のデータで置き換えました', en: 'Replaced chart with {{count}} people' },
+  aiImportInvalidType: { ja: '画像ファイルを選択してください（PNG, JPEGなど）', en: 'Please select an image file (PNG, JPEG, etc.)' },
+  aiImportTooLarge: { ja: 'ファイルサイズが大きすぎます（上限{{mb}}MB）', en: 'File is too large (max {{mb}}MB)' },
 } as const satisfies Record<string, Record<Locale, string>>
 
 export type TranslationKey = keyof typeof translations

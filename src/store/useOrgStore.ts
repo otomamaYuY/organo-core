@@ -157,6 +157,8 @@ interface OrgState {
 
   importFromJson: (json: unknown) => void
   exportToJson: () => void
+  mergePersonNodes: (newNodes: OrgNode[], newEdges: OrgEdge[]) => void
+  replaceWithPersonNodes: (newNodes: OrgNode[], newEdges: OrgEdge[]) => void
 
   markDirty: () => void
   markClean: () => void
@@ -391,6 +393,21 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       alert('JSONファイルの形式が正しくありません')
     }
   },
+
+  mergePersonNodes: (newNodes, newEdges) =>
+    set(state => ({
+      nodes: [...state.nodes, ...newNodes],
+      edges: [...state.edges, ...newEdges],
+      isDirty: true,
+    })),
+
+  replaceWithPersonNodes: (newNodes, newEdges) =>
+    set({
+      nodes: newNodes,
+      edges: newEdges,
+      selectedNodeId: null,
+      isDirty: true,
+    }),
 
   exportToJson: () => {
     const { nodes, edges } = get()
