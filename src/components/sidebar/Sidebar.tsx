@@ -29,6 +29,23 @@ export function Sidebar() {
     const memberCount = unitData.memberCount ?? 0
     const childUnitCount = unitData.childUnitCount ?? 0
 
+    // headPersonName: auto-add person node under parent org unit if not already present
+    const headName = unitData.headPersonName?.trim()
+    if (headName) {
+      const parentEdge = edges.find(e => e.target === unitId)
+      const parentNode = parentEdge ? nodes.find(n => n.id === parentEdge.source) : null
+      if (parentNode) {
+        const alreadyExists = edges.some(e => {
+          if (e.source !== parentNode.id) return false
+          const child = nodes.find(n => n.id === e.target)
+          return child?.data.kind === 'person' && (child.data as OrgPersonData).name === headName
+        })
+        if (!alreadyExists) {
+          addPersonNode(parentNode.id, undefined, { name: headName })
+        }
+      }
+    }
+
     // childUnitCount takes priority; fallback to memberCount
     if (childUnitCount > 0) {
       const existingUnitChildren = edges.filter(e => {

@@ -132,7 +132,7 @@ interface OrgState {
   onEdgesChange: OnEdgesChange
   onConnect: OnConnect
 
-  addPersonNode: (parentId?: string, position?: { x: number; y: number }) => void
+  addPersonNode: (parentId?: string, position?: { x: number; y: number }, initialData?: Partial<OrgPersonData>) => void
   addUnitNode: (parentId?: string, position?: { x: number; y: number }) => void
   updateNode: (id: string, data: Partial<OrgNodeData>) => void
   deleteNode: (id: string) => void
@@ -228,7 +228,7 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       isDirty: true,
     })),
 
-  addPersonNode: (parentId, position) => {
+  addPersonNode: (parentId, position, initialData) => {
     const id = generateId()
     const parentNode = parentId ? get().nodes.find(n => n.id === parentId) : null
     const nodePosition =
@@ -247,6 +247,7 @@ export const useOrgStore = create<OrgState>((set, get) => ({
       data: {
         ...DEFAULT_PERSON,
         ...(parentDepartment ? { department: parentDepartment } : {}),
+        ...initialData,
       },
     }
 
