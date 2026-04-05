@@ -84,9 +84,11 @@ test.describe('Node Editing via Sidebar', () => {
 
     // Clear the required name field completely
     await page.getByTestId('input-name').fill('')
-    await page.getByTestId('btn-save-person').click()
 
-    // CTO name should remain unchanged — validation should block the save
+    // Save button must be disabled while the name is empty
+    await expect(page.getByTestId('btn-save-person')).toBeDisabled()
+
+    // CTO name should remain unchanged — validation blocks the save
     const ctoNode = page.locator('[data-testid="org-node-node_cto"]')
     await expect(ctoNode.getByTestId('person-name')).toHaveText('Michael Rodriguez', { timeout: 3000 })
   })
