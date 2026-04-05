@@ -26,6 +26,8 @@ const DEFAULT_UNIT: OrgUnitData = {
   kind: 'org-unit',
   unitName: '新しい組織',
   unitType: 'department',
+  memberCount: 0,
+  childUnitCount: 0,
   tags: [],
 }
 
