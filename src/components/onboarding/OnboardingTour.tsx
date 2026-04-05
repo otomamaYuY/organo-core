@@ -1,17 +1,25 @@
 import { Joyride, type EventData, STATUS } from 'react-joyride'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useOrgStore } from '@/store/useOrgStore'
 import { useT } from '@/hooks/useT'
 import { getTourSteps } from './tourSteps'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 const STORAGE_KEY = 'organo-tour-completed'
 
 export function OnboardingTour() {
   const { run, startTour, stopTour } = useOnboardingStore()
+  const applyAutoLayout = useOrgStore(s => s.applyAutoLayout)
   const t = useT()
+  const prevRun = useRef(false)
 
-  // Tour is now started by useOnboardingStore.completeLanding() or initLanding()
-  // No auto-start here — the landing overlay controls the flow
+  // Apply auto-layout the first time the tour becomes active
+  useEffect(() => {
+    if (run && !prevRun.current) {
+      applyAutoLayout()
+    }
+    prevRun.current = run
+  }, [run, applyAutoLayout])
 
   const steps = getTourSteps({
     welcomeTitle: t('tourWelcomeTitle'),

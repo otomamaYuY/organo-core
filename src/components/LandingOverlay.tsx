@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Move, Download, ShieldCheck } from 'lucide-react'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useOrgStore } from '@/store/useOrgStore'
 import { useT } from '@/hooks/useT'
 
 const FEATURES = [
@@ -24,12 +25,14 @@ const FEATURES = [
 export function LandingOverlay() {
   const showLanding = useOnboardingStore(s => s.showLanding)
   const completeLanding = useOnboardingStore(s => s.completeLanding)
+  const applyAutoLayout = useOrgStore(s => s.applyAutoLayout)
   const t = useT()
   const [closing, setClosing] = useState(false)
 
   if (!showLanding && !closing) return null
 
   const handleCta = () => {
+    applyAutoLayout()
     setClosing(true)
     setTimeout(() => {
       completeLanding()

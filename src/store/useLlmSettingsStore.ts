@@ -37,19 +37,24 @@ const defaultBedrock: BedrockCredentials = { accessKeyId: '', secretAccessKey: '
 const defaultOpenai: OpenAICredentials = { apiKey: '' }
 const defaultAzureOpenai: AzureOpenAICredentials = { apiKey: '', endpoint: '' }
 
+const SUPPORTED_PROVIDERS: LlmProvider[] = ['openai']
+
 function loadFromStorage(): Pick<LlmSettingsState, 'provider' | 'bedrock' | 'openai' | 'azureOpenai'> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { provider: 'bedrock', bedrock: defaultBedrock, openai: defaultOpenai, azureOpenai: defaultAzureOpenai }
+    if (!raw) return { provider: 'openai', bedrock: defaultBedrock, openai: defaultOpenai, azureOpenai: defaultAzureOpenai }
     const parsed = JSON.parse(raw)
+    // If a previously saved provider is no longer supported, fall back to openai
+    const savedProvider: LlmProvider = parsed.provider ?? 'openai'
+    const provider = SUPPORTED_PROVIDERS.includes(savedProvider) ? savedProvider : 'openai'
     return {
-      provider: parsed.provider ?? 'bedrock',
+      provider,
       bedrock: { ...defaultBedrock, ...parsed.bedrock },
       openai: { ...defaultOpenai, ...parsed.openai },
       azureOpenai: { ...defaultAzureOpenai, ...parsed.azureOpenai },
     }
   } catch {
-    return { provider: 'bedrock', bedrock: defaultBedrock, openai: defaultOpenai, azureOpenai: defaultAzureOpenai }
+    return { provider: 'openai', bedrock: defaultBedrock, openai: defaultOpenai, azureOpenai: defaultAzureOpenai }
   }
 }
 
