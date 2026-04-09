@@ -22,6 +22,7 @@ import { HelpButton } from '@/components/onboarding/HelpButton'
 import { LandingOverlay } from '@/components/LandingOverlay'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { ToastContainer } from '@/components/ui/ToastContainer'
+import { JsonSidePanel } from '@/components/json-panel/JsonSidePanel'
 
 const nodeTypes = { orgNode: OrgNode }
 
@@ -219,6 +220,7 @@ export default function App() {
           </ReactFlow>
           {nodes.length === 0 && <EmptyState />}
           <Sidebar />
+          <JsonSidePanel />
         </div>
       </div>
     </div>
