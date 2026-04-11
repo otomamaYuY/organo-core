@@ -22,6 +22,11 @@ The JSON panel's edge trigger was redesigned from an 8 px invisible bar into a *
 - Slides off-screen smoothly when the panel is open, handing dismissal off to the panel's existing close button.
 - Marked up as a real `<button>` with `aria-label` and tooltip for keyboard and screen-reader access.
 
+### Bug Fixes
+
+#### JSON Editor Stuck on "Loading…" in Production
+On the deployed Cloudflare Pages site the JSON editor sometimes never finished initialising and remained on the "Loading…" placeholder forever. Root cause: `@monaco-editor/react` injects a `<script>` tag that fetches the Monaco runtime from `https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs/loader.js` at runtime. When the jsdelivr CDN was slow or unreachable from the user's network the loader request hung indefinitely and the editor never mounted. Fixed by **self-hosting Monaco**: `monaco-editor@0.55.1` is now a direct dependency, `scripts/copy-monaco.mjs` copies `node_modules/monaco-editor/min/vs` into `public/monaco/vs` during `postinstall` / `predev` / `prebuild`, and `src/main.tsx` calls `loader.config({ paths: { vs: '/monaco/vs' } })` so Monaco is fetched from the same origin as the app. The `public/monaco/` directory is git-ignored — it is regenerated from `node_modules` on every install and build.
+
 ---
 
 ## [v1.5.0] — 2026-04-05
