@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { X, Code2, AlertTriangle } from 'lucide-react'
+import { X, Code2, AlertTriangle, ChevronLeft } from 'lucide-react'
 import { useOrgStore } from '@/store/useOrgStore'
 import { useJsonPanelStore } from '@/store/useJsonPanelStore'
 import { useThemeStore } from '@/store/useThemeStore'
 import type { OrgNode, OrgEdge } from '@/types'
 
 const PANEL_WIDTH = 480
-const TRIGGER_WIDTH = 8
 const DEBOUNCE_MS = 600
 
 function serializeOrgData(nodes: OrgNode[], edges: OrgEdge[]): string {
@@ -76,45 +75,64 @@ export function JsonSidePanel() {
 
   return (
     <>
-      {/* Edge trigger — thin bar on the right edge */}
-      <div
+      {/* Edge trigger — vertical tab handle on the right edge */}
+      <button
+        type="button"
         data-testid="json-panel-trigger"
+        aria-label="Open JSON editor"
+        title="JSON エディタを開く"
         onMouseEnter={() => setTriggerHovered(true)}
         onMouseLeave={() => setTriggerHovered(false)}
         onClick={togglePanel}
+        className={!isOpen && !triggerHovered ? 'json-trigger-pulse' : undefined}
         style={{
           position: 'absolute',
-          top: 0,
+          top: '50%',
           right: 0,
-          width: TRIGGER_WIDTH,
-          height: '100%',
+          transform: isOpen
+            ? 'translate(100%, -50%)'
+            : triggerHovered
+              ? 'translate(-4px, -50%)'
+              : 'translate(0, -50%)',
+          width: 38,
+          height: 132,
+          padding: 0,
           zIndex: 20,
           cursor: 'pointer',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'background 0.18s ease, width 0.18s ease',
-          background: triggerHovered
-            ? 'var(--accent-bg)'
-            : 'transparent',
-          borderLeft: triggerHovered
-            ? '2px solid var(--accent)'
-            : '1px solid transparent',
+          justifyContent: 'space-between',
+          gap: 6,
+          paddingTop: 14,
+          paddingBottom: 14,
+          background: triggerHovered ? 'var(--accent)' : 'var(--surface-2)',
+          color: triggerHovered ? '#FFFFFF' : 'var(--accent-text)',
+          border: '1px solid var(--accent-border)',
+          borderRight: 'none',
+          borderTopLeftRadius: 12,
+          borderBottomLeftRadius: 12,
+          transition:
+            'transform 0.22s cubic-bezier(0.4,0,0.2,1), background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease',
+          pointerEvents: isOpen ? 'none' : 'auto',
         }}
       >
-        {/* Hover indicator dot */}
-        {triggerHovered && (
-          <div
-            style={{
-              width: 3,
-              height: 40,
-              borderRadius: 2,
-              background: 'var(--accent)',
-              opacity: 0.8,
-            }}
-          />
-        )}
-      </div>
+        <ChevronLeft size={18} strokeWidth={2.5} />
+        <Code2 size={18} strokeWidth={2.25} />
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            lineHeight: 1,
+          }}
+        >
+          JSON
+        </span>
+      </button>
 
       {/* Panel */}
       <div
