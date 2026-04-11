@@ -4,6 +4,26 @@ All notable changes to **organo-core** are documented in this file.
 
 ---
 
+## [v1.6.0] — 2026-04-11
+
+### New Features
+
+#### JSON Editor Side Panel with Bidirectional Sync
+A new right-side panel powered by **Monaco Editor** lets you view and edit the entire org chart as raw JSON alongside the visual canvas. Edits flow in both directions:
+- **GUI → JSON** — any change made in the canvas (add/move/delete nodes, edit fields, drag edges) is reflected in the editor immediately.
+- **JSON → GUI** — typing valid JSON in the editor updates the chart after a short debounce. Parse errors are surfaced in an inline error bar at the bottom of the panel without disrupting the canvas state.
+- A re-entrancy guard prevents the GUI ↔ JSON sync from looping when the user is the source of the change.
+
+#### Discoverable Vertical Tab Handle for the JSON Panel
+The JSON panel's edge trigger was redesigned from an 8 px invisible bar into a **prominent vertical tab handle** anchored to the right edge of the canvas:
+- Always visible when the panel is closed, with a chevron, code icon, and vertical "JSON" label so users immediately see "this is clickable, something will slide out".
+- A gentle 2.6 s **pulse animation** (accent-colored glow) attracts attention without being noisy; the pulse pauses on hover.
+- Hover state slides the tab 4 px to the left, fills it with the accent color, and brightens the icons.
+- Slides off-screen smoothly when the panel is open, handing dismissal off to the panel's existing close button.
+- Marked up as a real `<button>` with `aria-label` and tooltip for keyboard and screen-reader access.
+
+---
+
 ## [v1.5.0] — 2026-04-05
 
 ### New Features
