@@ -4,6 +4,32 @@ All notable changes to **organo-core** are documented in this file.
 
 ---
 
+## [v1.6.1] — 2026-04-12
+
+### Bug Fixes
+
+#### JSON Editor ↔ Canvas Sync Is Now Near-Instant and Collision-Safe
+The bidirectional sync between the JSON editor side panel and the visual canvas had three latent issues:
+
+1. **600 ms debounce on editor → store.** Typing in the JSON editor updated the canvas only 0.6 s after the last keystroke, which felt visibly laggy.
+2. **Mid-typing overwrite race.** While the user was editing the JSON, any GUI-side store mutation (a node click, a drag, any other action that produced a new `nodes` array reference) ran the store → editor sync effect and silently replaced the user's in-progress text with the canonical serialization. Root cause: the `suppressStoreSync` ref only skipped one effect pass and did not distinguish "user is mid-edit" from "user just committed".
+3. **CRLF / LF end-of-line mismatch.** On Windows, Monaco's model defaulted to `\r\n` while `JSON.stringify(..., null, 2)` produces `\n`. Every store update therefore made Monaco believe the `value` prop had changed (string-level inequality) and triggered a spurious `executeEdits` call — potentially causing the caret to jump on every canvas mutation even when the semantic content was identical.
+
+Fixed by a focused rewrite of `JsonSidePanel.tsx`:
+
+- **Debounce cut from 600 ms to 80 ms** and the handler commits the moment the text parses as valid JSON. Invalid JSON never reaches the store; it just shows an inline error bar.
+- **`suppressStoreSync` ref replaced with an `editorDirty` state.** While `editorDirty === true` the store → editor effect is a no-op, so an in-progress edit is **never** stomped on by an unrelated canvas action. The flag is cleared only on a successful commit or when the panel closes.
+- **Store → editor sync is gated on `isOpen`.** While the panel is hidden no serialization runs at all, eliminating per-drag-frame O(n) cost for users who never open the editor.
+- **Panel close discards any uncommitted edit state.** Reopening the panel always shows the live canvas contents, not stale half-written JSON from a previous session.
+- **Monaco model's end-of-line is pinned to LF** (`setEOL(EndOfLineSequence.LF)` in `onMount` and re-asserted before each commit). The `value` prop and `editor.getValue()` are now byte-equal for identical content, so Monaco skips the extra `executeEdits` pass and the caret stays put.
+
+Verified with an in-browser test harness: canvas edit → editor reflects in < 1 frame, editor edit → canvas reflects in ~200 ms (80 ms debounce + parse + React commit + DOM reflow), invalid in-progress JSON survives concurrent canvas mutations, and the editor's end-of-line stays LF across close/reopen cycles.
+
+#### Production URL Was Misconfigured in Metadata
+`index.html`'s `<link rel="canonical">`, `og:url`, `og:image`, `twitter:image`, JSON-LD `url` / `screenshot`, `public/sitemap.xml`, `public/robots.txt`'s `Sitemap:` directive, and the `public/llms.txt` docs link all referenced `https://organo.pages.dev/` — a completely unrelated third-party site. The project's actual Cloudflare Pages production URL is `https://organo-core.pages.dev/` (with hyphen). All six sources-of-truth now point to the correct domain, and `README.md` surfaces the production URL prominently at the top so the mistake is harder to repeat.
+
+---
+
 ## [v1.6.0] — 2026-04-11
 
 ### New Features
