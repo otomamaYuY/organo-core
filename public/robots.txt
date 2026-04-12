@@ -3,4 +3,4 @@ Allow: /
 Allow: /llms.txt
 Allow: /llms-full.txt
 
-Sitemap: https://organo.pages.dev/sitemap.xml
+Sitemap: https://organo-core.pages.dev/sitemap.xml

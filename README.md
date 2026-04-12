@@ -2,6 +2,8 @@
 
 An interactive organization chart editor built with React Flow.
 
+**Production:** https://organo-core.pages.dev/
+
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-green)

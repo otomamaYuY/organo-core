@@ -4,7 +4,7 @@
 
 Organo is a client-side single-page application (SPA) for creating and managing organizational charts. It runs entirely in the browser with no backend server. Data is stored in-memory via Zustand and can be exported to multiple formats.
 
-Deployed on Cloudflare Pages at https://organo.pages.dev/
+Deployed on Cloudflare Pages at https://organo-core.pages.dev/
 
 ## Architecture
 

@@ -13,7 +13,7 @@
 
 ## Docs
 
-- [Full technical documentation](https://organo.pages.dev/llms-full.txt)
+- [Full technical documentation](https://organo-core.pages.dev/llms-full.txt)
 
 ## Tech Stack
 
