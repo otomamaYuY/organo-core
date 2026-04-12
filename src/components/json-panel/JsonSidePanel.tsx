@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Editor from '@monaco-editor/react'
+import Editor, { type Monaco, type OnMount } from '@monaco-editor/react'
+import type { editor as MonacoEditorNS } from 'monaco-editor'
 import { X, Code2, AlertTriangle, ChevronLeft } from 'lucide-react'
 import { useOrgStore } from '@/store/useOrgStore'
 import { useJsonPanelStore } from '@/store/useJsonPanelStore'
@@ -7,7 +8,9 @@ import { useThemeStore } from '@/store/useThemeStore'
 import type { OrgNode, OrgEdge } from '@/types'
 
 const PANEL_WIDTH = 480
-const DEBOUNCE_MS = 600
+// Short trailing debounce so parsing is stable across bursts of keystrokes
+// (80ms ≈ a natural pause between words) but commits feel near-instant.
+const COMMIT_DEBOUNCE_MS = 80
 
 function serializeOrgData(nodes: OrgNode[], edges: OrgEdge[]): string {
   return JSON.stringify({ nodes, edges }, null, 2)
@@ -21,50 +24,101 @@ export function JsonSidePanel() {
   const theme = useThemeStore(s => s.theme)
 
   const [editorValue, setEditorValue] = useState(() => serializeOrgData(nodes, edges))
+  // `editorDirty` is the authoritative "user is mid-edit" signal. While true,
+  // GUI-originated store changes do NOT overwrite the editor text, so the
+  // user's in-progress typing is never stomped on. Cleared when the debounce
+  // successfully commits a valid JSON, or when the panel is closed.
+  const [editorDirty, setEditorDirty] = useState(false)
   const [parseError, setParseError] = useState<string | null>(null)
   const [triggerHovered, setTriggerHovered] = useState(false)
 
-  // Guard against sync loops: when we push changes from editor → store,
-  // we set this ref so the store → editor effect skips one cycle.
-  const suppressStoreSync = useRef(false)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Captured in onMount so handleEditorChange can force the model's EOL
+  // back to LF on every commit (Monaco occasionally flips to OS-default
+  // CRLF when fed newline-free content via setValue).
+  const modelRef = useRef<MonacoEditorNS.ITextModel | null>(null)
+  const monacoRef = useRef<Monaco | null>(null)
+  const forceLfEol = useCallback(() => {
+    const m = modelRef.current
+    const mo = monacoRef.current
+    if (m && mo) m.setEOL(mo.editor.EndOfLineSequence.LF)
+  }, [])
 
-  // Store → Editor sync: when nodes/edges change from GUI, update editor text
+  // Store → Editor sync. Runs only while the panel is visible AND the user
+  // isn't actively editing the JSON. When the panel is closed we skip entirely
+  // — the ~O(n) serialize cost is wasted if no one can see the result.
   useEffect(() => {
-    if (suppressStoreSync.current) {
-      suppressStoreSync.current = false
-      return
-    }
-    const serialized = serializeOrgData(nodes, edges)
-    setEditorValue(serialized)
+    if (!isOpen) return
+    if (editorDirty) return
+    forceLfEol()
+    setEditorValue(serializeOrgData(nodes, edges))
     setParseError(null)
-  }, [nodes, edges])
+  }, [nodes, edges, isOpen, editorDirty, forceLfEol])
 
-  // Editor → Store sync (debounced)
+  // Closing the panel discards any in-progress (uncommitted) edit state so
+  // the next time it's reopened the user sees the live store contents, not
+  // stale text from a previous session.
+  useEffect(() => {
+    if (!isOpen) {
+      setEditorDirty(false)
+      setParseError(null)
+    }
+  }, [isOpen])
+
+  // Editor → Store sync. Fires COMMIT_DEBOUNCE_MS after the last keystroke;
+  // commits immediately on a valid JSON, keeps the dirty flag set while the
+  // text is invalid so in-progress edits are preserved across GUI updates.
   const handleEditorChange = useCallback(
     (value: string | undefined) => {
       if (value === undefined) return
       setEditorValue(value)
+      setEditorDirty(true)
 
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
       debounceTimer.current = setTimeout(() => {
+        let parsed: unknown
         try {
-          const parsed = JSON.parse(value)
-          if (!parsed.nodes || !Array.isArray(parsed.nodes) || !parsed.edges || !Array.isArray(parsed.edges)) {
-            setParseError('JSON must contain "nodes" and "edges" arrays')
-            return
-          }
-          setParseError(null)
-          suppressStoreSync.current = true
-          importFromJson(parsed)
+          parsed = JSON.parse(value)
         } catch (e) {
           setParseError(e instanceof Error ? e.message : 'Invalid JSON')
+          return // keep editorDirty so in-progress text survives GUI updates
         }
-      }, DEBOUNCE_MS)
+        if (
+          !parsed ||
+          typeof parsed !== 'object' ||
+          !Array.isArray((parsed as { nodes?: unknown }).nodes) ||
+          !Array.isArray((parsed as { edges?: unknown }).edges)
+        ) {
+          setParseError('JSON must contain "nodes" and "edges" arrays')
+          return
+        }
+        const data = parsed as { nodes: OrgNode[]; edges: OrgEdge[] }
+        // Normalize editor contents to the canonical serialization so the
+        // follow-up store→editor effect is a strict-equal no-op and Monaco
+        // doesn't trigger an extra executeEdits / cursor jump.
+        forceLfEol()
+        setEditorValue(serializeOrgData(data.nodes, data.edges))
+        setParseError(null)
+        setEditorDirty(false)
+        importFromJson(data)
+      }, COMMIT_DEBOUNCE_MS)
     },
-    [importFromJson],
+    [importFromJson, forceLfEol],
   )
+
+  const handleMount: OnMount = useCallback((editor, monaco) => {
+    monacoRef.current = monaco
+    const model = editor.getModel()
+    if (model) {
+      modelRef.current = model
+      // Force LF end-of-line to match our JSON.stringify output. Without
+      // this, Monaco defaults to CRLF on Windows, so the `value` prop (LF)
+      // differs from the editor's internal text (CRLF) on every sync pass
+      // and triggers a spurious executeEdits / cursor jump.
+      model.setEOL(monaco.editor.EndOfLineSequence.LF)
+    }
+  }, [])
 
   // Cleanup debounce timer
   useEffect(() => {
@@ -208,6 +262,7 @@ export function JsonSidePanel() {
             theme={theme === 'dark' ? 'vs-dark' : 'light'}
             value={editorValue}
             onChange={handleEditorChange}
+            onMount={handleMount}
             options={{
               minimap: { enabled: false },
               fontSize: 12.5,
