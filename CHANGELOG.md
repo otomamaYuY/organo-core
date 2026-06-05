@@ -4,6 +4,35 @@ All notable changes to **organo-core** are documented in this file.
 
 ---
 
+## [v1.6.2] — 2026-06-06
+
+### Maintenance
+
+#### Dead Code Removal and Dependency Reduction
+
+Static analysis (knip) identified dead exports, unused dependencies, and unreachable symbols. All removals were verified with TypeScript type-checking and unit tests.
+
+**Unused dependencies removed (3):**
+- `framer-motion` — no imports anywhere in `src/`
+- `@testing-library/user-event` — no imports in any test file
+- `eslint-config-prettier` — not referenced in `eslint.config.js`
+
+**Dead code deleted:**
+- `isChromeAiAvailable()` in `services/llm/chrome-ai.ts` — thin wrapper with zero callers; availability check is done directly via `getChromeAiAvailability()`
+- Re-export barrel line in `services/llm/index.ts` — neither `isChromeAiAvailable` nor `getChromeAiAvailability` was imported through the barrel; the latter is consumed directly from its source file
+- `NodeKind` type in `types/index.ts` — unused union type; the codebase uses the literal string values inline
+- `ORG_UNIT_TYPE_LABELS` constant in `types/index.ts` — Japanese label map with no consumers
+- `isPersonNode` / `isUnitNode` type guards in `types/index.ts` — unused; `node.data.kind` is checked inline where needed
+- `LlmOutput` derived type in `services/llm/schema.ts` — not referenced anywhere
+- Redundant `export type { ExtractedPerson }` re-export at the bottom of `AiImportModal.tsx` — the type is available directly from `@/services/llm`
+
+**Internal-only exports narrowed:**
+- `orgPersonSchema` / `orgUnitSchema` — these fixed-locale schema instances are only needed for `OrgPersonFormValues` / `OrgUnitFormValues` type inference; the exported symbols were removed while keeping the constants in scope
+- `extractedPersonSchema` in `services/llm/schema.ts` — used internally to compose `llmOutputSchema`; no external consumers
+- `Toast` interface in `store/useToastStore.ts` — used only inside the store module to type the `toasts` array
+
+---
+
 ## [v1.6.1] — 2026-04-12
 
 ### Bug Fixes

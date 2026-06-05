@@ -31,11 +31,6 @@ export async function getChromeAiAvailability(): Promise<ChromeAiAvailability> {
   }
 }
 
-export async function isChromeAiAvailable(): Promise<boolean> {
-  const availability = await getChromeAiAvailability()
-  return availability === 'readily' || availability === 'after-download'
-}
-
 const SYSTEM_PROMPT = `You are an expert at parsing organizational structure descriptions.
 Extract all people and their hierarchical relationships from the user's text.
 
