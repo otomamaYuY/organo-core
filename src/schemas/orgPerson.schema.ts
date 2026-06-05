@@ -35,6 +35,5 @@ export function createOrgPersonSchema(locale: Locale) {
   })
 }
 
-// Static schema kept for backward-compatible type inference only
-export const orgPersonSchema = createOrgPersonSchema('ja')
+const orgPersonSchema = createOrgPersonSchema('ja')
 export type OrgPersonFormValues = z.infer<typeof orgPersonSchema>

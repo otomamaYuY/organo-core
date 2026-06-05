@@ -527,6 +527,3 @@ if (typeof document !== 'undefined' && !document.getElementById('ai-import-spin'
   style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }'
   document.head.appendChild(style)
 }
-
-// Re-export for parent use
-export type { ExtractedPerson }

@@ -4,7 +4,7 @@ import { z } from 'zod'
  * LLM output schema for org chart extraction.
  * Uses temporary id/parentId to represent hierarchy before merging into the store.
  */
-export const extractedPersonSchema = z.object({
+const extractedPersonSchema = z.object({
   id: z.string().min(1),
   parentId: z.string().nullable(),
   name: z.string().min(1),
@@ -22,4 +22,3 @@ export const llmOutputSchema = z.object({
 })
 
 export type ExtractedPerson = z.infer<typeof extractedPersonSchema>
-export type LlmOutput = z.infer<typeof llmOutputSchema>

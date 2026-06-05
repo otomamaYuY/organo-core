@@ -1,8 +1,5 @@
 import type { Node, Edge } from 'reactflow'
 
-// ─── NodeKind ────────────────────────────────────────
-export type NodeKind = 'person' | 'org-unit'
-
 // ─── Person Node ─────────────────────────────────────
 export type EmploymentType = 'full-time' | 'part-time' | 'contract' | 'intern' | 'advisor'
 
@@ -31,17 +28,6 @@ export type OrgUnitType =
   | 'unit'
   | 'post'
 
-export const ORG_UNIT_TYPE_LABELS: Record<OrgUnitType, string> = {
-  company: '会社',
-  headquarters: '本部',
-  bureau: '局',
-  department: '部',
-  division: '室・事業部',
-  section: '課',
-  unit: '係・チーム',
-  post: '担当',
-}
-
 export interface OrgUnitData {
   kind: 'org-unit'
   unitName: string
@@ -60,15 +46,6 @@ export type OrgNodeData = OrgPersonData | OrgUnitData
 
 export interface OrgNode extends Node<OrgNodeData> {
   type: 'orgNode'
-}
-
-// ─── Type Guards ─────────────────────────────────────
-export function isPersonNode(node: OrgNode): node is OrgNode & { data: OrgPersonData } {
-  return node.data.kind === 'person'
-}
-
-export function isUnitNode(node: OrgNode): node is OrgNode & { data: OrgUnitData } {
-  return node.data.kind === 'org-unit'
 }
 
 // ─── Edge ────────────────────────────────────────────

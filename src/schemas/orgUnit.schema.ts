@@ -31,6 +31,5 @@ export function createOrgUnitSchema(locale: Locale) {
   })
 }
 
-// Static schema kept for backward-compatible type inference only
-export const orgUnitSchema = createOrgUnitSchema('ja')
+const orgUnitSchema = createOrgUnitSchema('ja')
 export type OrgUnitFormValues = z.infer<typeof orgUnitSchema>
