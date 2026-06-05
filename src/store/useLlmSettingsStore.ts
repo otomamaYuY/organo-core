@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type LlmProvider = 'bedrock' | 'openai' | 'azure-openai'
+export type LlmProvider = 'bedrock' | 'openai' | 'azure-openai' | 'chrome-ai'
 
 interface BedrockCredentials {
   accessKeyId: string
@@ -37,7 +37,7 @@ const defaultBedrock: BedrockCredentials = { accessKeyId: '', secretAccessKey: '
 const defaultOpenai: OpenAICredentials = { apiKey: '' }
 const defaultAzureOpenai: AzureOpenAICredentials = { apiKey: '', endpoint: '' }
 
-const SUPPORTED_PROVIDERS: LlmProvider[] = ['openai']
+const SUPPORTED_PROVIDERS: LlmProvider[] = ['openai', 'chrome-ai']
 
 function loadFromStorage(): Pick<LlmSettingsState, 'provider' | 'bedrock' | 'openai' | 'azureOpenai'> {
   try {
@@ -87,6 +87,8 @@ export const useLlmSettingsStore = create<LlmSettingsState>((set, get) => ({
   isConfigured: () => {
     const { provider, bedrock, openai, azureOpenai } = get()
     switch (provider) {
+      case 'chrome-ai':
+        return true
       case 'bedrock':
         return !!(bedrock.accessKeyId && bedrock.secretAccessKey && bedrock.region)
       case 'openai':

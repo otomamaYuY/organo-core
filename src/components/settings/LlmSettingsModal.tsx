@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { X, Eye, EyeOff, Trash2, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Eye, EyeOff, Trash2, Check, Cpu } from 'lucide-react'
 import { useLlmSettingsStore, type LlmProvider } from '@/store/useLlmSettingsStore'
 import { toast } from '@/store/useToastStore'
 import { useT } from '@/hooks/useT'
+import { getChromeAiAvailability, type ChromeAiAvailability } from '@/services/llm/chrome-ai'
 
 interface LlmSettingsModalProps {
   onClose: () => void
@@ -16,6 +17,11 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
   const [bedrock, setBedrock] = useState({ ...store.bedrock })
   const [openai, setOpenai] = useState({ ...store.openai })
   const [azureOpenai, setAzureOpenai] = useState({ ...store.azureOpenai })
+  const [chromeAiStatus, setChromeAiStatus] = useState<ChromeAiAvailability>('unsupported')
+
+  useEffect(() => {
+    getChromeAiAvailability().then(setChromeAiStatus)
+  }, [])
   const handleSave = () => {
     store.setProvider(provider)
     store.updateBedrock(bedrock)
@@ -96,18 +102,74 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
           style={{ width: '100%', marginBottom: 8 }}
         >
           <option value="openai">{t('settingsProviderOpenai')}</option>
+          <option
+            value="chrome-ai"
+            disabled={chromeAiStatus === 'no' || chromeAiStatus === 'unsupported'}
+          >
+            {t('settingsProviderChromeAi')}
+            {(chromeAiStatus === 'no' || chromeAiStatus === 'unsupported') ? ` (${t('settingsComingSoon')})` : ''}
+          </option>
           <option value="bedrock" disabled>{t('settingsProviderBedrock')} ({t('settingsComingSoon')})</option>
           <option value="azure-openai" disabled>{t('settingsProviderAzure')} ({t('settingsComingSoon')})</option>
         </select>
-        <div
-          style={{
-            color: 'var(--text-3)',
-            fontSize: 11,
-            marginBottom: 16,
-          }}
-        >
+
+        {/* Chrome AI availability badge */}
+        {(chromeAiStatus === 'readily' || chromeAiStatus === 'after-download') && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'var(--accent-bg)',
+              border: '1px solid var(--accent)',
+              borderRadius: 6,
+              padding: '6px 10px',
+              marginBottom: 8,
+              fontSize: 12,
+              color: 'var(--accent)',
+              fontWeight: 500,
+            }}
+          >
+            <Cpu size={13} />
+            {t('settingsChromeAiAvailable')}
+            <span style={{ color: 'var(--text-3)', fontWeight: 400, marginLeft: 4 }}>
+              — {t('settingsChromeAiNote')}
+            </span>
+          </div>
+        )}
+
+        {(chromeAiStatus === 'no' || chromeAiStatus === 'unsupported') && (
+          <div
+            style={{
+              color: 'var(--text-3)',
+              fontSize: 11,
+              marginBottom: 8,
+            }}
+          >
+            {t('settingsChromeAiUnavailable')}
+          </div>
+        )}
+
+        <div style={{ color: 'var(--text-3)', fontSize: 11, marginBottom: 16 }}>
           {t('settingsOnlyOpenai')}
         </div>
+
+        {/* Chrome AI: no credentials needed */}
+        {provider === 'chrome-ai' && (
+          <div
+            style={{
+              padding: '12px 14px',
+              background: 'var(--surface-2)',
+              borderRadius: 8,
+              marginBottom: 16,
+              color: 'var(--text-2)',
+              fontSize: 13,
+              lineHeight: 1.6,
+            }}
+          >
+            {t('settingsChromeAiNote')}
+          </div>
+        )}
 
         {/* Dynamic Fields */}
         {provider === 'bedrock' && (

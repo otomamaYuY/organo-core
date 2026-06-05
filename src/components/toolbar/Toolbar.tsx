@@ -16,8 +16,10 @@ import { useRef, useState } from 'react'
 import { ExportModal } from '@/components/export/ExportModal'
 import { LlmSettingsModal } from '@/components/settings/LlmSettingsModal'
 import { AiImportModal } from '@/components/import/AiImportModal'
+import { ChromeAiImportModal } from '@/components/import/ChromeAiImportModal'
 import { ImportPreview } from '@/components/import/ImportPreview'
 import { useAiImport } from '@/hooks/useAiImport'
+import { useLlmSettingsStore } from '@/store/useLlmSettingsStore'
 import { useOrgStore } from '@/store/useOrgStore'
 import { useThemeStore } from '@/store/useThemeStore'
 import { useLocaleStore } from '@/store/useLocaleStore'
@@ -28,6 +30,7 @@ export function Toolbar() {
   const [showLlmSettings, setShowLlmSettings] = useState(false)
   const [showAiImport, setShowAiImport] = useState(false)
   const { phase, result, errorMessage, analyze, applyToChart, reset } = useAiImport()
+  const llmProvider = useLlmSettingsStore((s) => s.provider)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const applyAutoLayout = useOrgStore(s => s.applyAutoLayout)
@@ -193,7 +196,10 @@ export function Toolbar() {
 
       {showExport && <ExportModal onClose={() => setShowExport(false)} />}
       {showLlmSettings && <LlmSettingsModal onClose={() => setShowLlmSettings(false)} />}
-      {showAiImport && (
+      {showAiImport && llmProvider === 'chrome-ai' && (
+        <ChromeAiImportModal onClose={() => setShowAiImport(false)} />
+      )}
+      {showAiImport && llmProvider !== 'chrome-ai' && (
         <AiImportModal
           onClose={() => { reset(); setShowAiImport(false) }}
           phase={phase}
