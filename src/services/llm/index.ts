@@ -1,8 +1,11 @@
 import { analyzeImageWithOpenAI } from './openai'
+import { analyzeTextWithChromeAI } from './chrome-ai'
 import type { ExtractedPerson } from './schema'
 
+export type { isChromeAiAvailable, getChromeAiAvailability } from './chrome-ai'
+
 interface LlmCredentials {
-  provider: 'openai' | 'bedrock' | 'azure-openai'
+  provider: 'openai' | 'bedrock' | 'azure-openai' | 'chrome-ai'
   openai: { apiKey: string }
   bedrock: { accessKeyId: string; secretAccessKey: string; region: string }
   azureOpenai: { apiKey: string; endpoint: string }
@@ -17,12 +20,16 @@ export async function importGraphFromImage(
     case 'openai':
       return analyzeImageWithOpenAI(base64, mimeType, creds.openai)
     case 'azure-openai':
-      // Future: implement Azure OpenAI client
       throw new Error('Azure OpenAI support coming soon. Please use OpenAI for now.')
     case 'bedrock':
-      // Future: implement via Cloudflare Worker proxy
       throw new Error('Amazon Bedrock support coming soon. Please use OpenAI for now.')
+    case 'chrome-ai':
+      throw new Error('Chrome AI does not support image input. Use importGraphFromText instead.')
   }
+}
+
+export async function importGraphFromText(text: string): Promise<ExtractedPerson[]> {
+  return analyzeTextWithChromeAI(text)
 }
 
 export type { ExtractedPerson } from './schema'

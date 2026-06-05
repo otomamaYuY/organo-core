@@ -171,11 +171,23 @@ export const translations = {
   tooltipSettings: { ja: 'AI設定', en: 'AI Settings' },
   settingsComingSoon: { ja: '近日対応予定', en: 'Coming Soon' },
   settingsOnlyOpenai: { ja: '現在はOpenAIのみ対応しています。Amazon Bedrock・Azure OpenAIは近日対応予定です。', en: 'Currently only OpenAI is supported. Amazon Bedrock and Azure OpenAI are coming soon.' },
+  settingsProviderChromeAi: { ja: 'Chrome Built-in AI（Gemini Nano）', en: 'Chrome Built-in AI (Gemini Nano)' },
+  settingsChromeAiAvailable: { ja: '✓ このブラウザで利用可能', en: '✓ Available in this browser' },
+  settingsChromeAiUnavailable: { ja: 'このブラウザでは利用できません（Chrome 127+が必要）', en: 'Not available (requires Chrome 127+)' },
+  settingsChromeAiNote: { ja: 'APIキー不要。テキストから組織図を生成します。', en: 'No API key needed. Generates org charts from text.' },
 
   // ── AI Image Import (Phase 2) ────────────────────────
-  aiImportBtn: { ja: 'AI画像インポート', en: 'AI Image Import' },
-  tooltipAiImport: { ja: '画像から組織図をAIで生成（プレミアム）', en: 'Generate org chart from image via AI (Premium)' },
+  aiImportBtn: { ja: 'AI インポート', en: 'AI Import' },
+  tooltipAiImport: { ja: 'AIで組織図を生成（プレミアム）', en: 'Generate org chart via AI (Premium)' },
   aiImportTitle: { ja: 'AI画像インポート（プレミアム）', en: 'AI Image Import (Premium)' },
+
+  // ── Chrome AI Text Import ────────────────────────────
+  chromeAiImportTitle: { ja: 'AI テキストインポート（Chrome Built-in AI）', en: 'AI Text Import (Chrome Built-in AI)' },
+  chromeAiImportSubtitle: { ja: '組織図の構造をテキストで入力してください。AIが自動解析します。', en: 'Describe your org structure in text. AI will parse it automatically.' },
+  chromeAiImportPlaceholder: { ja: 'CEO: 山田太郎\nCTO: 鈴木一郎（山田太郎に報告）\nエンジニア: 田中次郎（鈴木一郎に報告）\n...\n\nどのような形式でも解析します。', en: 'CEO: John Smith\nCTO: Jane Doe (reports to John Smith)\nEngineer: Bob Brown (reports to Jane Doe)\n...\n\nAny format works.' },
+  chromeAiImportAnalyze: { ja: 'AIで組織図を解析 →', en: 'Parse with AI →' },
+  chromeAiImportAnalyzing: { ja: 'Gemini Nano が解析中...', en: 'Gemini Nano is analyzing...' },
+  chromeAiImportHint: { ja: 'APIキー不要・オフライン動作', en: 'No API key · Works offline' },
   aiImportNeedsConfig: {
     ja: 'この機能を使うにはLLMプロバイダの設定が必要です。',
     en: 'Please configure your LLM provider to use this feature.',
