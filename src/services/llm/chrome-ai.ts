@@ -1,31 +1,31 @@
 import { llmOutputSchema, type ExtractedPerson } from './schema'
 
-declare global {
-  interface Window {
-    ai?: {
-      languageModel?: ChromeLanguageModelAPI
-    }
-  }
-}
-
-interface ChromeLanguageModelAPI {
-  availability(): Promise<'readily' | 'after-download' | 'no'>
-  create(options?: { systemPrompt?: string }): Promise<ChromeLanguageModelSession>
+interface ChromeLanguageModelCreateOptions {
+  initialPrompts?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
+  signal?: AbortSignal
 }
 
 interface ChromeLanguageModelSession {
-  prompt(input: string): Promise<string>
+  prompt(input: string, options?: { signal?: AbortSignal }): Promise<string>
   destroy(): void
 }
 
-export type ChromeAiAvailability = 'readily' | 'after-download' | 'no' | 'unsupported'
+interface ChromeLanguageModelAPI {
+  availability(options?: object): Promise<'available' | 'downloadable' | 'downloading' | 'unavailable'>
+  create(options?: ChromeLanguageModelCreateOptions): Promise<ChromeLanguageModelSession>
+}
+
+declare global {
+  var LanguageModel: ChromeLanguageModelAPI | undefined
+}
+
+export type ChromeAiAvailability = 'available' | 'downloadable' | 'downloading' | 'unavailable' | 'unsupported'
 
 export async function getChromeAiAvailability(): Promise<ChromeAiAvailability> {
   if (typeof window === 'undefined') return 'unsupported'
-  const api = window.ai?.languageModel
-  if (!api) return 'unsupported'
+  if (typeof LanguageModel === 'undefined' || LanguageModel == null) return 'unsupported'
   try {
-    return await api.availability()
+    return await LanguageModel.availability()
   } catch {
     return 'unsupported'
   }
@@ -63,18 +63,22 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
     throw new Error(`入力テキストが長すぎます（上限 ${MAX_INPUT_CHARS} 文字）。短くしてから再試行してください。`)
   }
 
-  const api = window.ai?.languageModel
-  if (!api) {
+  if (typeof LanguageModel === 'undefined' || LanguageModel == null) {
     throw new Error('Chrome Built-in AI はこのブラウザで利用できません。(Chrome Built-in AI is not available in this browser.)')
   }
 
-  const availability = await api.availability()
-  if (availability === 'no') {
+  const availability = await LanguageModel.availability()
+  if (availability === 'unavailable') {
     throw new Error('Gemini Nano はこのデバイスで利用できません。(Gemini Nano is not available on this device.)')
+  }
+  if (availability === 'downloading') {
+    throw new Error('Gemini Nano はダウンロード中です。しばらく待ってから再試行してください。(Gemini Nano is downloading. Please wait and try again.)')
   }
 
   const SESSION_TIMEOUT_MS = 60_000
-  const sessionPromise = api.create({ systemPrompt: SYSTEM_PROMPT })
+  const sessionPromise = LanguageModel.create({
+    initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
+  })
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(
       () => reject(new Error('モデルの初期化がタイムアウトしました。しばらく待ってから再試行してください。')),

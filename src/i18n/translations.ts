@@ -173,6 +173,8 @@ export const translations = {
   settingsOnlyOpenai: { ja: '現在はOpenAIのみ対応しています。Amazon Bedrock・Azure OpenAIは近日対応予定です。', en: 'Currently only OpenAI is supported. Amazon Bedrock and Azure OpenAI are coming soon.' },
   settingsProviderChromeAi: { ja: 'Chrome Built-in AI（Gemini Nano）', en: 'Chrome Built-in AI (Gemini Nano)' },
   settingsChromeAiAvailable: { ja: '✓ このブラウザで利用可能', en: '✓ Available in this browser' },
+  settingsChromeAiDownloadable: { ja: '⬇ 初回使用時にモデルをダウンロードします', en: '⬇ Model will download on first use' },
+  settingsChromeAiDownloading: { ja: '⏳ Gemini Nano をダウンロード中...', en: '⏳ Downloading Gemini Nano...' },
   settingsChromeAiUnavailable: { ja: 'このブラウザでは利用できません（Chrome 127+が必要）', en: 'Not available (requires Chrome 127+)' },
   settingsChromeAiNote: { ja: 'APIキー不要。テキストから組織図を生成します。', en: 'No API key needed. Generates org charts from text.' },
 

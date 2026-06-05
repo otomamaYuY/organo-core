@@ -104,41 +104,37 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
           <option value="openai">{t('settingsProviderOpenai')}</option>
           <option
             value="chrome-ai"
-            disabled={chromeAiStatus === 'no' || chromeAiStatus === 'unsupported'}
+            disabled={chromeAiStatus === 'unavailable' || chromeAiStatus === 'unsupported'}
           >
             {t('settingsProviderChromeAi')}
-            {(chromeAiStatus === 'no' || chromeAiStatus === 'unsupported') ? ` (${t('settingsComingSoon')})` : ''}
+            {(chromeAiStatus === 'unavailable' || chromeAiStatus === 'unsupported') ? ` (${t('settingsComingSoon')})` : ''}
           </option>
           <option value="bedrock" disabled>{t('settingsProviderBedrock')} ({t('settingsComingSoon')})</option>
           <option value="azure-openai" disabled>{t('settingsProviderAzure')} ({t('settingsComingSoon')})</option>
         </select>
 
         {/* Chrome AI availability badge */}
-        {(chromeAiStatus === 'readily' || chromeAiStatus === 'after-download') && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'var(--accent-bg)',
-              border: '1px solid var(--accent)',
-              borderRadius: 6,
-              padding: '6px 10px',
-              marginBottom: 8,
-              fontSize: 12,
-              color: 'var(--accent)',
-              fontWeight: 500,
-            }}
-          >
+        {chromeAiStatus === 'available' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--accent-bg)', border: '1px solid var(--accent)', borderRadius: 6, padding: '6px 10px', marginBottom: 8, fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>
             <Cpu size={13} />
             {t('settingsChromeAiAvailable')}
-            <span style={{ color: 'var(--text-3)', fontWeight: 400, marginLeft: 4 }}>
-              — {t('settingsChromeAiNote')}
-            </span>
+            <span style={{ color: 'var(--text-3)', fontWeight: 400, marginLeft: 4 }}>— {t('settingsChromeAiNote')}</span>
+          </div>
+        )}
+        {chromeAiStatus === 'downloadable' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--warning-bg, #fff8e1)', border: '1px solid var(--warning, #f59e0b)', borderRadius: 6, padding: '6px 10px', marginBottom: 8, fontSize: 12, color: 'var(--warning, #b45309)', fontWeight: 500 }}>
+            <Cpu size={13} />
+            {t('settingsChromeAiDownloadable')}
+          </div>
+        )}
+        {chromeAiStatus === 'downloading' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--warning-bg, #fff8e1)', border: '1px solid var(--warning, #f59e0b)', borderRadius: 6, padding: '6px 10px', marginBottom: 8, fontSize: 12, color: 'var(--warning, #b45309)', fontWeight: 500 }}>
+            <Cpu size={13} />
+            {t('settingsChromeAiDownloading')}
           </div>
         )}
 
-        {(chromeAiStatus === 'no' || chromeAiStatus === 'unsupported') && (
+        {(chromeAiStatus === 'unavailable' || chromeAiStatus === 'unsupported') && (
           <div
             style={{
               color: 'var(--text-3)',
