@@ -150,9 +150,11 @@ export function LlmSettingsModal({ onClose }: LlmSettingsModalProps) {
           </div>
         )}
 
-        <div style={{ color: 'var(--text-3)', fontSize: 11, marginBottom: 16 }}>
-          {t('settingsOnlyOpenai')}
-        </div>
+        {provider !== 'chrome-ai' && (
+          <div style={{ color: 'var(--text-3)', fontSize: 11, marginBottom: 16 }}>
+            {t('settingsOnlyOpenai')}
+          </div>
+        )}
 
         {/* Chrome AI: no credentials needed */}
         {provider === 'chrome-ai' && (

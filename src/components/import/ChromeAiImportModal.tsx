@@ -48,8 +48,8 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
 
   if (phase === 'loading') {
     return (
-      <Backdrop onClick={() => {}}>
-        <Panel width={360}>
+      <Backdrop onClick={onClose}>
+        <Panel width={360} onClick={(e) => e.stopPropagation()}>
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, color: 'var(--accent)' }}>
               <SpinnerIcon />
@@ -57,7 +57,23 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
             <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
               {t('chromeAiImportAnalyzing')}
             </div>
-            <div style={{ color: 'var(--text-3)', fontSize: 12 }}>{t('chromeAiImportHint')}</div>
+            <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 16 }}>{t('chromeAiImportHint')}</div>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                borderRadius: 7,
+                padding: '0 16px',
+                height: 34,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                color: 'var(--text-2)',
+              }}
+            >
+              {t('settingsCancel')}
+            </button>
           </div>
         </Panel>
       </Backdrop>
@@ -152,6 +168,7 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={t('chromeAiImportPlaceholder')}
+          maxLength={8000}
           rows={10}
           style={{
             width: '100%',
@@ -282,6 +299,7 @@ function ModalHeader({ title, onClose }: { title: string; onClose: () => void })
       </div>
       <button
         onClick={onClose}
+        aria-label="Close"
         style={{
           background: 'none',
           border: 'none',
