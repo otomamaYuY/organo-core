@@ -32,8 +32,8 @@ export async function getChromeAiAvailability(): Promise<ChromeAiAvailability> {
 }
 
 export async function isChromeAiAvailable(): Promise<boolean> {
-  const a = await getChromeAiAvailability()
-  return a === 'readily' || a === 'after-download'
+  const availability = await getChromeAiAvailability()
+  return availability === 'readily' || availability === 'after-download'
 }
 
 const SYSTEM_PROMPT = `You are an expert at parsing organizational structure descriptions.
@@ -61,7 +61,13 @@ Output schema:
   ]
 }`
 
+const MAX_INPUT_CHARS = 8000
+
 export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPerson[]> {
+  if (text.length > MAX_INPUT_CHARS) {
+    throw new Error(`入力テキストが長すぎます（上限 ${MAX_INPUT_CHARS} 文字）。短くしてから再試行してください。`)
+  }
+
   const api = window.ai?.languageModel
   if (!api) {
     throw new Error('Chrome Built-in AI はこのブラウザで利用できません。(Chrome Built-in AI is not available in this browser.)')
@@ -72,7 +78,15 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
     throw new Error('Gemini Nano はこのデバイスで利用できません。(Gemini Nano is not available on this device.)')
   }
 
-  const session = await api.create({ systemPrompt: SYSTEM_PROMPT })
+  const SESSION_TIMEOUT_MS = 60_000
+  const sessionPromise = api.create({ systemPrompt: SYSTEM_PROMPT })
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(
+      () => reject(new Error('モデルの初期化がタイムアウトしました。しばらく待ってから再試行してください。')),
+      SESSION_TIMEOUT_MS,
+    ),
+  )
+  const session = await Promise.race([sessionPromise, timeoutPromise])
 
   try {
     const raw = await session.prompt(

@@ -2,7 +2,7 @@ import { analyzeImageWithOpenAI } from './openai'
 import { analyzeTextWithChromeAI } from './chrome-ai'
 import type { ExtractedPerson } from './schema'
 
-export type { isChromeAiAvailable, getChromeAiAvailability } from './chrome-ai'
+export { isChromeAiAvailable, getChromeAiAvailability } from './chrome-ai'
 
 interface LlmCredentials {
   provider: 'openai' | 'bedrock' | 'azure-openai' | 'chrome-ai'
