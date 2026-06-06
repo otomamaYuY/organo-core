@@ -93,6 +93,24 @@ Output schema:
 }`
 
 const MAX_INPUT_CHARS = 8000
+const PROMPT_TIMEOUT_MS = 45_000
+
+/**
+ * Normalize input text before sending to Gemini Nano.
+ * Removes ASCII tree drawing characters and simplifies complex formatting
+ * that small on-device models struggle with.
+ */
+function preprocessOrgText(text: string): string {
+  return text
+    // Tree diagram branch chars → plain indent
+    .replace(/[├└]─+\s*/g, '- ')
+    .replace(/│\s*/g, '  ')
+    // Full-width space normalization
+    .replace(/　/g, ' ')
+    // Collapse 3+ consecutive spaces to 2
+    .replace(/ {3,}/g, '  ')
+    .trim()
+}
 
 /**
  * Fix up LLM output after Zod validation:
@@ -175,10 +193,17 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
   let imageBitmap: ImageBitmap | null = null
   try {
     imageBitmap = await createImageBitmap(file)
-    const raw = await session.prompt([
+    const promptPromise = session.prompt([
       '以下の組織図画像を解析してJSONを返してください。',
       { type: 'image', content: imageBitmap },
-    ]).catch((err: unknown) => {
+    ])
+    const promptTimeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('解析がタイムアウトしました。画像を確認して再試行してください。')),
+        PROMPT_TIMEOUT_MS,
+      ),
+    )
+    const raw = await Promise.race([promptPromise, promptTimeoutPromise]).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.includes('message channel closed') || msg.includes('message port closed')) {
         throw new Error('解析がタイムアウトしました。画像を確認して再試行してください。')
@@ -223,23 +248,32 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
     throw new Error('Gemini Nano はダウンロード中です。しばらく待ってから再試行してください。(Gemini Nano is downloading. Please wait and try again.)')
   }
 
+  const processedText = preprocessOrgText(text)
+
   const SESSION_TIMEOUT_MS = 60_000
   const sessionPromise = LanguageModel.create({
     expectedInputs: [{ type: 'text' }],
     initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
   })
-  const timeoutPromise = new Promise<never>((_, reject) =>
+  const sessionTimeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(
       () => reject(new Error('モデルの初期化がタイムアウトしました。しばらく待ってから再試行してください。')),
       SESSION_TIMEOUT_MS,
     ),
   )
-  const session = await Promise.race([sessionPromise, timeoutPromise])
+  const session = await Promise.race([sessionPromise, sessionTimeoutPromise])
 
   try {
-    const raw = await session.prompt(
-      `以下の組織構造を解析してJSONを返してください:\n\n${text}`,
-    ).catch((err: unknown) => {
+    const promptPromise = session.prompt(
+      `以下の組織構造を解析してJSONを返してください:\n\n${processedText}`,
+    )
+    const promptTimeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('解析がタイムアウトしました。入力テキストを短くするか、シンプルな構造にして再試行してください。')),
+        PROMPT_TIMEOUT_MS,
+      ),
+    )
+    const raw = await Promise.race([promptPromise, promptTimeoutPromise]).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.includes('message channel closed') || msg.includes('message port closed')) {
         throw new Error('解析がタイムアウトしました。入力テキストを短くするか、シンプルな構造にして再試行してください。')
