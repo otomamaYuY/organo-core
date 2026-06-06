@@ -58,6 +58,51 @@ Output schema:
 
 const MAX_INPUT_CHARS = 8000
 
+/**
+ * Fix up LLM output after Zod validation:
+ * 1. Nullify parentId that references a non-existent id (including self-reference)
+ * 2. Break circular reference chains by nullifying the offending parentId
+ */
+function sanitizePersons(persons: ExtractedPerson[]): ExtractedPerson[] {
+  const idSet = new Set(persons.map((p) => p.id))
+
+  // Step 1: referential integrity — parentId must exist in the array and not be self
+  const fixed = persons.map((p) => ({
+    ...p,
+    parentId:
+      p.parentId !== null &&
+      p.parentId !== undefined &&
+      idSet.has(p.parentId) &&
+      p.parentId !== p.id
+        ? p.parentId
+        : null,
+  }))
+
+  // Step 2: circular reference detection — walk each node's ancestor chain;
+  // if we revisit a node we've already seen, the current node closes a cycle → break it
+  const parentMap = new Map<string, string | null>(fixed.map((p) => [p.id, p.parentId ?? null]))
+  const cycleBreakers = new Set<string>()
+
+  for (const person of fixed) {
+    if (parentMap.get(person.id) === null) continue
+
+    const visited = new Set<string>()
+    visited.add(person.id)
+    let cursor: string | null = parentMap.get(person.id) ?? null
+
+    while (cursor !== null) {
+      if (visited.has(cursor)) {
+        cycleBreakers.add(person.id)
+        break
+      }
+      visited.add(cursor)
+      cursor = parentMap.get(cursor) ?? null
+    }
+  }
+
+  return fixed.map((p) => (cycleBreakers.has(p.id) ? { ...p, parentId: null } : p))
+}
+
 export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPerson[]> {
   if (text.length > MAX_INPUT_CHARS) {
     throw new Error(`入力テキストが長すぎます（上限 ${MAX_INPUT_CHARS} 文字）。短くしてから再試行してください。`)
@@ -105,7 +150,7 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
       throw new Error(`解析結果の検証に失敗しました: ${result.error.issues[0]?.message ?? 'unknown'}`)
     }
 
-    return result.data.persons
+    return sanitizePersons(result.data.persons)
   } finally {
     session.destroy()
   }
