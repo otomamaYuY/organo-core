@@ -190,6 +190,12 @@ export const translations = {
   chromeAiImportAnalyze: { ja: 'AIで組織図を解析 →', en: 'Parse with AI →' },
   chromeAiImportAnalyzing: { ja: 'Gemini Nano が解析中...', en: 'Gemini Nano is analyzing...' },
   chromeAiImportHint: { ja: 'APIキー不要・オフライン動作', en: 'No API key · Works offline' },
+  chromeAiTabText: { ja: 'テキスト', en: 'Text' },
+  chromeAiTabImage: { ja: '画像', en: 'Image' },
+  chromeAiImageSubtitle: {
+    ja: '組織図の画像（PNG・JPG・スクリーンショット等）をドロップまたは貼り付けてください。AIが自動解析します。',
+    en: 'Drop or paste an org chart image (PNG, JPG, screenshot, etc.). AI will parse it automatically.',
+  },
   chromeAiSetupTitle: { ja: 'Gemini Nano のセットアップが必要です', en: 'Gemini Nano Setup Required' },
   chromeAiSetupFree: { ja: '無料・安全・完全オフライン動作', en: 'Free · Secure · Fully Offline' },
   chromeAiSetupDescription: {

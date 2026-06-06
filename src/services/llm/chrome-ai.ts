@@ -1,12 +1,22 @@
 import { llmOutputSchema, type ExtractedPerson } from './schema'
 
+interface ChromeLanguageModelImageInput {
+  type: 'image'
+  content: ImageBitmap
+}
+
 interface ChromeLanguageModelCreateOptions {
   initialPrompts?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
+  expectedInputs?: Array<{ type: 'text' | 'image' | 'audio'; languages?: string[] }>
+  expectedOutputs?: Array<{ type: 'text'; languages?: string[] }>
   signal?: AbortSignal
 }
 
 interface ChromeLanguageModelSession {
-  prompt(input: string, options?: { signal?: AbortSignal }): Promise<string>
+  prompt(
+    input: string | Array<string | ChromeLanguageModelImageInput>,
+    options?: { signal?: AbortSignal },
+  ): Promise<string>
   destroy(): void
 }
 
@@ -40,6 +50,31 @@ Rules:
 - Set parentId to null for the root (top-level person).
 - If a field is not mentioned, set it to null.
 - Never hallucinate. Only include information present in the input.
+
+Output schema:
+{
+  "persons": [
+    {
+      "id": "p1",
+      "parentId": null,
+      "name": "Full Name",
+      "role": "Job Title",
+      "department": "Department Name or null",
+      "email": "email@example.com or null",
+      "employmentType": "full-time | part-time | contract | intern | advisor | null"
+    }
+  ]
+}`
+
+const IMAGE_SYSTEM_PROMPT = `You are an expert at reading organizational chart images.
+Extract all people and their hierarchical relationships visible in the image.
+
+Rules:
+- Output ONLY valid JSON. No markdown, no code blocks.
+- Assign each person a unique short id (e.g. "p1", "p2", ...).
+- Set parentId to null for the root (top-level person).
+- If a field is not visible in the image, set it to null.
+- Never hallucinate. Only include information visible in the image.
 
 Output schema:
 {
@@ -101,6 +136,67 @@ function sanitizePersons(persons: ExtractedPerson[]): ExtractedPerson[] {
   }
 
   return fixed.map((p) => (cycleBreakers.has(p.id) ? { ...p, parentId: null } : p))
+}
+
+export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPerson[]> {
+  if (typeof LanguageModel === 'undefined' || LanguageModel == null) {
+    throw new Error('Chrome Built-in AI はこのブラウザで利用できません。')
+  }
+
+  const availability = await LanguageModel.availability()
+  if (availability === 'unavailable') {
+    throw new Error('Gemini Nano はこのデバイスで利用できません。')
+  }
+  if (availability === 'downloading') {
+    throw new Error('Gemini Nano はダウンロード中です。しばらく待ってから再試行してください。')
+  }
+
+  const SESSION_TIMEOUT_MS = 60_000
+
+  let session: ChromeLanguageModelSession
+  try {
+    const sessionPromise = LanguageModel.create({
+      expectedInputs: [{ type: 'text' }, { type: 'image' }],
+      initialPrompts: [{ role: 'system', content: IMAGE_SYSTEM_PROMPT }],
+    })
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('モデルの初期化がタイムアウトしました。しばらく待ってから再試行してください。')), SESSION_TIMEOUT_MS),
+    )
+    session = await Promise.race([sessionPromise, timeoutPromise])
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('タイムアウト')) throw err
+    throw new Error(
+      '画像入力セッションの作成に失敗しました。Chrome を最新版に更新し、chrome://flags で "Prompt API for Gemini Nano" を有効にしてください。',
+    )
+  }
+
+  let imageBitmap: ImageBitmap | null = null
+  try {
+    imageBitmap = await createImageBitmap(file)
+    const raw = await session.prompt([
+      '以下の組織図画像を解析してJSONを返してください。',
+      { type: 'image', content: imageBitmap },
+    ])
+
+    let parsed: unknown
+    try {
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+      parsed = JSON.parse(jsonMatch ? jsonMatch[1].trim() : raw.trim())
+    } catch {
+      throw new Error('Chrome AIが無効なJSONを返しました。別の画像で再試行してください。(Invalid JSON from Chrome AI)')
+    }
+
+    const result = llmOutputSchema.safeParse(parsed)
+    if (!result.success) {
+      throw new Error(`解析結果の検証に失敗しました: ${result.error.issues[0]?.message ?? 'unknown'}`)
+    }
+
+    return sanitizePersons(result.data.persons)
+  } finally {
+    imageBitmap?.close()
+    session.destroy()
+  }
 }
 
 export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPerson[]> {

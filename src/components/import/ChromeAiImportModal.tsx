@@ -1,32 +1,82 @@
-import { useState, useCallback, useEffect } from 'react'
-import { X, Bot, AlertCircle, Cpu, ExternalLink, CheckCircle } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { X, Bot, AlertCircle, Cpu, ExternalLink, CheckCircle, ImagePlus, Clipboard } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import { importGraphFromText, type ExtractedPerson } from '@/services/llm'
+import { analyzeImageWithChromeAI, getChromeAiAvailability, type ChromeAiAvailability } from '@/services/llm/chrome-ai'
 import { useAiImport } from '@/hooks/useAiImport'
 import { ImportPreview } from './ImportPreview'
-import { getChromeAiAvailability, type ChromeAiAvailability } from '@/services/llm/chrome-ai'
 
 interface ChromeAiImportModalProps {
   onClose: () => void
 }
 
 type Phase = 'idle' | 'loading' | 'preview' | 'error'
+type Tab = 'text' | 'image'
 
 const CHROME_AI_DOCS_URL = 'https://developer.chrome.com/docs/ai/built-in'
+const MAX_IMAGE_MB = 20
 
 export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
   const t = useT()
   const { applyToChart } = useAiImport()
 
   const [phase, setPhase] = useState<Phase>('idle')
+  const [tab, setTab] = useState<Tab>('text')
   const [text, setText] = useState('')
   const [result, setResult] = useState<ExtractedPerson[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [availability, setAvailability] = useState<ChromeAiAvailability | 'checking'>('checking')
 
+  // Image tab state
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewUrlRef = useRef<string | null>(null)
+
   useEffect(() => {
     getChromeAiAvailability().then(setAvailability)
   }, [])
+
+  // Revoke object URL on unmount
+  useEffect(() => {
+    return () => { if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current) }
+  }, [])
+
+  const processFile = useCallback((file: File) => {
+    setImageError(null)
+    if (!file.type.startsWith('image/')) {
+      setImageError(t('aiImportInvalidType'))
+      return
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      setImageError(t('aiImportTooLarge').replace('{{mb}}', String(MAX_IMAGE_MB)))
+      return
+    }
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    const url = URL.createObjectURL(file)
+    previewUrlRef.current = url
+    setImageFile(file)
+    setImagePreviewUrl(url)
+  }, [t])
+
+  // Clipboard paste → switch to image tab automatically
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) { setTab('image'); processFile(file) }
+          break
+        }
+      }
+    }
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [processFile])
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) return
@@ -41,6 +91,20 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
       setPhase('error')
     }
   }, [text])
+
+  const handleAnalyzeImage = useCallback(async () => {
+    if (!imageFile) return
+    setPhase('loading')
+    setErrorMessage(null)
+    try {
+      const persons = await analyzeImageWithChromeAI(imageFile)
+      setResult(persons)
+      setPhase('preview')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Unknown error occurred')
+      setPhase('error')
+    }
+  }, [imageFile])
 
   const handleApply = useCallback(
     (persons: ExtractedPerson[], mode: 'append' | 'replace') => {
@@ -316,9 +380,12 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
     )
   }
 
+  const canAnalyze = tab === 'text' ? Boolean(text.trim()) : Boolean(imageFile)
+  const handleAnalyzeClick = tab === 'text' ? handleAnalyze : handleAnalyzeImage
+
   return (
     <Backdrop onClick={handleClose}>
-      <Panel width={520} onClick={(e) => e.stopPropagation()}>
+      <Panel width={540} onClick={(e) => e.stopPropagation()}>
         <ModalHeader title={t('chromeAiImportTitle')} onClose={handleClose} />
 
         {/* Badge */}
@@ -341,45 +408,197 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
           {t('chromeAiImportHint')}
         </div>
 
-        <div style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 14, lineHeight: 1.6 }}>
-          {t('chromeAiImportSubtitle')}
+        {/* Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 0,
+            marginBottom: 16,
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            overflow: 'hidden',
+          }}
+        >
+          {(['text', 'image'] as Tab[]).map((t_) => (
+            <button
+              key={t_}
+              onClick={() => setTab(t_)}
+              style={{
+                flex: 1,
+                height: 34,
+                border: 'none',
+                borderRight: t_ === 'text' ? '1px solid var(--border)' : 'none',
+                background: tab === t_ ? 'var(--accent)' : 'var(--surface-2)',
+                color: tab === t_ ? '#fff' : 'var(--text-2)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              {t_ === 'text' ? t('chromeAiTabText') : t('chromeAiTabImage')}
+            </button>
+          ))}
         </div>
 
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={t('chromeAiImportPlaceholder')}
-          maxLength={8000}
-          rows={10}
-          style={{
-            width: '100%',
-            borderRadius: 8,
-            border: '1px solid var(--border)',
-            background: 'var(--surface-2)',
-            color: 'var(--text)',
-            fontSize: 13,
-            padding: '10px 12px',
-            resize: 'vertical',
-            fontFamily: 'inherit',
-            lineHeight: 1.6,
-            boxSizing: 'border-box',
-          }}
-        />
+        {/* Text tab */}
+        {tab === 'text' && (
+          <>
+            <div style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 10, lineHeight: 1.6 }}>
+              {t('chromeAiImportSubtitle')}
+            </div>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={t('chromeAiImportPlaceholder')}
+              maxLength={8000}
+              rows={10}
+              style={{
+                width: '100%',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface-2)',
+                color: 'var(--text)',
+                fontSize: 13,
+                padding: '10px 12px',
+                resize: 'vertical',
+                fontFamily: 'inherit',
+                lineHeight: 1.6,
+                boxSizing: 'border-box',
+              }}
+            />
+          </>
+        )}
+
+        {/* Image tab */}
+        {tab === 'image' && (
+          <>
+            <div style={{ color: 'var(--text-2)', fontSize: 13, marginBottom: 10, lineHeight: 1.6 }}>
+              {t('chromeAiImageSubtitle')}
+            </div>
+
+            {/* Drop zone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragging(false)
+                const file = e.dataTransfer.files[0]
+                if (file) processFile(file)
+              }}
+              onClick={() => !imageFile && fileInputRef.current?.click()}
+              style={{
+                border: `2px dashed ${isDragging ? 'var(--accent)' : 'var(--border)'}`,
+                borderRadius: 10,
+                padding: 24,
+                minHeight: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDragging ? 'var(--accent-bg)' : 'var(--surface-2)',
+                cursor: imageFile ? 'default' : 'pointer',
+                transition: 'border-color 0.15s, background 0.15s',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {imagePreviewUrl ? (
+                <>
+                  <img
+                    src={imagePreviewUrl}
+                    alt="preview"
+                    style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 6, objectFit: 'contain' }}
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setImageFile(null)
+                      setImagePreviewUrl(null)
+                      setImageError(null)
+                      if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      padding: '3px 10px',
+                      fontSize: 11,
+                      color: 'var(--text-2)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('aiImportChangeImage')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{ color: 'var(--accent)', marginBottom: 12 }}>
+                    <ImagePlus size={36} />
+                  </div>
+                  <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 13, marginBottom: 6 }}>
+                    {t('aiImportDropHere')}
+                  </div>
+                  <div style={{ color: 'var(--text-3)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Clipboard size={11} />
+                    {t('aiImportPasteHint')}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {imageError && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: '7px 12px',
+                  background: 'var(--danger-bg)',
+                  border: '1px solid var(--danger-border)',
+                  borderRadius: 6,
+                  color: 'var(--danger)',
+                  fontSize: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <AlertCircle size={13} />
+                {imageError}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) processFile(file)
+                e.target.value = ''
+              }}
+            />
+          </>
+        )}
 
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           <button
-            disabled={!text.trim()}
-            onClick={handleAnalyze}
+            disabled={!canAnalyze}
+            onClick={handleAnalyzeClick}
             style={{
               flex: 1,
               height: 36,
               borderRadius: 7,
               border: 'none',
-              background: text.trim() ? 'var(--accent)' : 'var(--surface-3)',
-              color: text.trim() ? '#fff' : 'var(--text-3)',
+              background: canAnalyze ? 'var(--accent)' : 'var(--surface-3)',
+              color: canAnalyze ? '#fff' : 'var(--text-3)',
               fontSize: 13,
               fontWeight: 600,
-              cursor: text.trim() ? 'pointer' : 'not-allowed',
+              cursor: canAnalyze ? 'pointer' : 'not-allowed',
               transition: 'background 0.15s, color 0.15s',
             }}
           >
