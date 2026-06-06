@@ -93,7 +93,7 @@ Output schema:
 }`
 
 const MAX_INPUT_CHARS = 8000
-const PROMPT_TIMEOUT_MS = 45_000
+const PROMPT_TIMEOUT_MS = 20_000
 
 /**
  * Normalize input text before sending to Gemini Nano.
@@ -193,23 +193,32 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
   let imageBitmap: ImageBitmap | null = null
   try {
     imageBitmap = await createImageBitmap(file)
-    const promptPromise = session.prompt([
-      '以下の組織図画像を解析してJSONを返してください。',
-      { type: 'image', content: imageBitmap },
-    ])
-    const promptTimeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error('解析がタイムアウトしました。画像を確認して再試行してください。')),
-        PROMPT_TIMEOUT_MS,
-      ),
-    )
-    const raw = await Promise.race([promptPromise, promptTimeoutPromise]).catch((err: unknown) => {
+
+    const abortController = new AbortController()
+    const timeoutId = setTimeout(() => abortController.abort(), PROMPT_TIMEOUT_MS)
+
+    let raw: string
+    try {
+      raw = await session.prompt(
+        [
+          '以下の組織図画像を解析してJSONを返してください。',
+          { type: 'image', content: imageBitmap },
+        ],
+        { signal: abortController.signal },
+      )
+    } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('message channel closed') || msg.includes('message port closed')) {
-        throw new Error('解析がタイムアウトしました。画像を確認して再試行してください。')
+      if (
+        (err instanceof DOMException && err.name === 'AbortError') ||
+        msg.includes('message channel closed') ||
+        msg.includes('message port closed')
+      ) {
+        throw new Error('解析がタイムアウトしました（20秒超過）。画像をシンプルにして再試行してください。')
       }
       throw err
-    })
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     let parsed: unknown
     try {
@@ -263,23 +272,29 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
   )
   const session = await Promise.race([sessionPromise, sessionTimeoutPromise])
 
+  const abortController = new AbortController()
+  const timeoutId = setTimeout(() => abortController.abort(), PROMPT_TIMEOUT_MS)
+
   try {
-    const promptPromise = session.prompt(
-      `以下の組織構造を解析してJSONを返してください:\n\n${processedText}`,
-    )
-    const promptTimeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error('解析がタイムアウトしました。入力テキストを短くするか、シンプルな構造にして再試行してください。')),
-        PROMPT_TIMEOUT_MS,
-      ),
-    )
-    const raw = await Promise.race([promptPromise, promptTimeoutPromise]).catch((err: unknown) => {
+    let raw: string
+    try {
+      raw = await session.prompt(
+        `以下の組織構造を解析してJSONを返してください:\n\n${processedText}`,
+        { signal: abortController.signal },
+      )
+    } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('message channel closed') || msg.includes('message port closed')) {
-        throw new Error('解析がタイムアウトしました。入力テキストを短くするか、シンプルな構造にして再試行してください。')
+      if (
+        (err instanceof DOMException && err.name === 'AbortError') ||
+        msg.includes('message channel closed') ||
+        msg.includes('message port closed')
+      ) {
+        throw new Error('解析がタイムアウトしました（20秒超過）。入力テキストを短くするか、シンプルな構造にして再試行してください。')
       }
       throw err
-    })
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     let parsed: unknown
     try {
