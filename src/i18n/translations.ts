@@ -191,8 +191,8 @@ export const translations = {
   chromeAiImportAnalyzing: { ja: 'Gemini Nano が解析中...', en: 'Gemini Nano is analyzing...' },
   chromeAiImportHint: { ja: 'APIキー不要・オフライン動作', en: 'No API key · Works offline' },
   chromeAiLoadingHint: {
-    ja: 'デバイスで直接処理しています。最大60秒かかる場合があります。',
-    en: 'Processing on-device. This may take up to 60 seconds.',
+    ja: 'デバイスで直接処理しています。最大2分かかる場合があります。',
+    en: 'Processing on-device. This may take up to 2 minutes.',
   },
   chromeAiTabText: { ja: 'テキスト', en: 'Text' },
   chromeAiTabImage: { ja: '画像', en: 'Image' },
