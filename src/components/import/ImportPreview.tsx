@@ -146,7 +146,7 @@ export function ImportPreview({ persons: initial, onApply, onBack }: ImportPrevi
                 {/* Role */}
                 <td style={tdStyle}>
                   <InlineInput
-                    value={row.role}
+                    value={row.role ?? ''}
                     onChange={(v) => updateRow(i, { role: v })}
                     required
                   />

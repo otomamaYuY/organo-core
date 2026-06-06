@@ -50,13 +50,24 @@ export async function getChromeAiAvailability(): Promise<ChromeAiAvailability> {
 // Restored as initialPrompts to prevent the model generating explanatory text
 // around the JSON (which breaks parsing and makes inference slower).
 
-const SYSTEM_PROMPT = `You parse org charts into JSON. Output ONLY this format, no other text:
-{"persons":[{"id":"p1","parentId":null,"name":"Name","role":"Title or null","department":null,"email":null,"employmentType":null}]}
-Rules: sequential ids (p1,p2,...) | parentId null for root | null for unknown fields`
+/**
+ * Keep prompts short — Gemini Nano has a small context window and long system
+ * prompts slow down session creation noticeably.
+ *
+ * Critical constraints explicitly stated:
+ *   1. Output ONLY JSON (no prose / markdown around it)
+ *   2. employmentType is an enum — list the allowed values so the model doesn't invent Japanese labels
+ *   3. Use null (not "") for unknown fields — prevents Zod min(1) failures on role
+ */
+const SYSTEM_PROMPT = `Output ONLY JSON, no other text:
+{"persons":[{"id":"p1","parentId":null,"name":"Name","role":"Title","department":null,"email":null,"employmentType":null}]}
+Rules: ids p1,p2,p3... | parentId null for root | use null not "" for unknowns
+employmentType must be null or one of: "full-time" "part-time" "contract" "intern" "advisor"`
 
-const IMAGE_SYSTEM_PROMPT = `You parse org chart images into JSON. Output ONLY this format, no other text:
-{"persons":[{"id":"p1","parentId":null,"name":"Name","role":"Title or null","department":null,"email":null,"employmentType":null}]}
-Rules: sequential ids (p1,p2,...) | parentId null for root | null for unknown fields`
+const IMAGE_SYSTEM_PROMPT = `Output ONLY JSON, no other text:
+{"persons":[{"id":"p1","parentId":null,"name":"Name","role":"Title","department":null,"email":null,"employmentType":null}]}
+Rules: ids p1,p2,p3... | parentId null for root | use null not "" for unknowns
+employmentType must be null or one of: "full-time" "part-time" "contract" "intern" "advisor"`
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -158,19 +169,72 @@ function withPromptTimeout<T>(promise: Promise<T>, timeoutMessage: string): Prom
   }) as Promise<T>
 }
 
+/**
+ * Multi-strategy JSON extraction.
+ * Gemini Nano sometimes wraps the JSON in markdown fences or leading prose
+ * despite the "Output ONLY JSON" instruction.
+ *
+ * Priority:
+ *   1. Markdown fence  ```json ... ```  or  ``` ... ```
+ *   2. Raw JSON if the trimmed string already starts with { or [
+ *   3. First {...} or [...] found inside a prose response
+ */
+function extractJson(raw: string): unknown {
+  // Strategy 1 — markdown code fence
+  const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenceMatch) return JSON.parse(fenceMatch[1].trim())
+
+  const trimmed = raw.trim()
+
+  // Strategy 2 — entire response is already JSON
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return JSON.parse(trimmed)
+  }
+
+  // Strategy 3 — extract the first {...} block from prose (greedy, outermost)
+  const objectMatch = trimmed.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
+  if (objectMatch) return JSON.parse(objectMatch[1])
+
+  throw new Error('No JSON object found in model response')
+}
+
 function parseAndValidate(raw: string): ExtractedPerson[] {
+  // Always log raw response so console output reveals exactly what the model returned
+  dbg(`raw response (${raw.length} chars): ${raw.slice(0, 800)}`)
+  if (raw.length > 800) dbg(`...response truncated (${raw.length} total chars)`)
+
   let parsed: unknown
   try {
-    const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-    parsed = JSON.parse(jsonMatch ? jsonMatch[1].trim() : raw.trim())
+    parsed = extractJson(raw)
   } catch (e) {
-    dbgError('JSON parse failed. Raw response:', raw.slice(0, 300))
-    throw new Error('AIが無効なJSONを返しました。入力を確認して再試行してください。(Invalid JSON from Chrome AI)')
+    const hint = raw.slice(0, 120).replace(/\n/g, '↵')
+    dbgError('JSON extraction failed', e)
+    dbg(`response head: ${hint}`)
+    throw new Error(
+      `AIが有効なJSONを返しませんでした。\n` +
+      `先頭120文字: ${hint}\n` +
+      `(${e instanceof Error ? e.message : String(e)})`,
+    )
   }
+
+  dbg(`parsed JSON: ${JSON.stringify(parsed).slice(0, 400)}`)
+
   const result = llmOutputSchema.safeParse(parsed)
   if (!result.success) {
-    dbgError('Zod validation failed:', result.error.issues)
-    throw new Error(`解析結果の検証に失敗しました: ${result.error.issues[0]?.message ?? 'unknown'}`)
+    const issues = result.error.issues
+    // Log each issue individually so the browser console shows full detail
+    dbgError(`Zod validation failed — ${issues.length} issue(s):`, issues)
+    issues.forEach((iss, i) => {
+      dbg(`  [${i + 1}] path=${iss.path.join('.')} code=${iss.code} message=${iss.message}`)
+    })
+    dbg(`  parsed root keys: ${Object.keys(parsed as object).join(', ')}`)
+    const detail = issues
+      .slice(0, 5)
+      .map((iss) => `${iss.path.join('.') || '?'}: ${iss.message}`)
+      .join('; ')
+    throw new Error(
+      `解析結果の検証に失敗しました（${issues.length}件）。\n詳細: ${detail}`,
+    )
   }
   return sanitizePersons(result.data.persons)
 }
