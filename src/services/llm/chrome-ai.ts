@@ -158,7 +158,6 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
   try {
     const sessionPromise = LanguageModel.create({
       expectedInputs: [{ type: 'text' }, { type: 'image' }],
-      expectedOutputs: [{ type: 'text', languages: ['*'] }],
       initialPrompts: [{ role: 'system', content: IMAGE_SYSTEM_PROMPT }],
     })
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -227,7 +226,6 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
   const SESSION_TIMEOUT_MS = 60_000
   const sessionPromise = LanguageModel.create({
     expectedInputs: [{ type: 'text' }],
-    expectedOutputs: [{ type: 'text', languages: ['*'] }],
     initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
   })
   const timeoutPromise = new Promise<never>((_, reject) =>
