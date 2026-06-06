@@ -8,7 +8,7 @@ const extractedPersonSchema = z.object({
   id: z.string().min(1),
   parentId: z.string().nullable(),
   name: z.string().min(1),
-  role: z.string().min(1),
+  role: z.string().min(1).nullable().optional(),
   department: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
   employmentType: z
