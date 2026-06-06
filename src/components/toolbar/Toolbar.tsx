@@ -7,14 +7,12 @@ import {
   Sun,
   Moon,
   FilePlus,
-  Settings,
   ImagePlus,
 } from 'lucide-react'
 import { SearchBar } from './SearchBar'
 import { SaveStatus } from './SaveStatus'
 import { useRef, useState } from 'react'
 import { ExportModal } from '@/components/export/ExportModal'
-import { LlmSettingsModal } from '@/components/settings/LlmSettingsModal'
 import { ChromeAiImportModal } from '@/components/import/ChromeAiImportModal'
 import { useOrgStore } from '@/store/useOrgStore'
 import { useThemeStore } from '@/store/useThemeStore'
@@ -23,7 +21,6 @@ import { useT } from '@/hooks/useT'
 
 export function Toolbar() {
   const [showExport, setShowExport] = useState(false)
-  const [showLlmSettings, setShowLlmSettings] = useState(false)
   const [showAiImport, setShowAiImport] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -158,15 +155,6 @@ export function Toolbar() {
 
         <SaveStatus />
 
-        {/* LLM Settings */}
-        <IconBtn
-          onClick={() => setShowLlmSettings(true)}
-          title={t('settingsTitle')}
-          tooltip={t('tooltipSettings')}
-        >
-          <Settings size={15} />
-        </IconBtn>
-
         {/* Language toggle */}
         <IconBtn
           onClick={toggleLocale}
@@ -189,7 +177,6 @@ export function Toolbar() {
       </div>
 
       {showExport && <ExportModal onClose={() => setShowExport(false)} />}
-      {showLlmSettings && <LlmSettingsModal onClose={() => setShowLlmSettings(false)} />}
       {showAiImport && (
         <ChromeAiImportModal onClose={() => setShowAiImport(false)} />
       )}
