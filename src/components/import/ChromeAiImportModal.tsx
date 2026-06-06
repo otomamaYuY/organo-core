@@ -1,15 +1,18 @@
-import { useState, useCallback } from 'react'
-import { X, Bot, AlertCircle, Cpu } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { X, Bot, AlertCircle, Cpu, ExternalLink, CheckCircle } from 'lucide-react'
 import { useT } from '@/hooks/useT'
 import { importGraphFromText, type ExtractedPerson } from '@/services/llm'
 import { useAiImport } from '@/hooks/useAiImport'
 import { ImportPreview } from './ImportPreview'
+import { getChromeAiAvailability, type ChromeAiAvailability } from '@/services/llm/chrome-ai'
 
 interface ChromeAiImportModalProps {
   onClose: () => void
 }
 
 type Phase = 'idle' | 'loading' | 'preview' | 'error'
+
+const CHROME_AI_DOCS_URL = 'https://developer.chrome.com/docs/ai/built-in'
 
 export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
   const t = useT()
@@ -19,6 +22,11 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
   const [text, setText] = useState('')
   const [result, setResult] = useState<ExtractedPerson[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [availability, setAvailability] = useState<ChromeAiAvailability | 'checking'>('checking')
+
+  useEffect(() => {
+    getChromeAiAvailability().then(setAvailability)
+  }, [])
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) return
@@ -44,6 +52,179 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
 
   const handleClose = () => {
     onClose()
+  }
+
+  // ── Checking availability ───────────────────────────────
+  if (availability === 'checking') {
+    return (
+      <Backdrop onClick={onClose}>
+        <Panel width={360} onClick={(e) => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, color: 'var(--accent)' }}>
+              <SpinnerIcon />
+            </div>
+          </div>
+        </Panel>
+      </Backdrop>
+    )
+  }
+
+  // ── Setup required (unsupported / unavailable / downloadable / downloading) ──
+  if (availability !== 'available') {
+    const isDownloading = availability === 'downloading'
+    const isDownloadable = availability === 'downloadable'
+
+    return (
+      <Backdrop onClick={onClose}>
+        <Panel width={500} onClick={(e) => e.stopPropagation()}>
+          <ModalHeader title={t('chromeAiSetupTitle')} onClose={onClose} />
+
+          {/* Free & Safe badge */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              background: 'var(--accent-bg)',
+              border: '1px solid var(--accent)',
+              borderRadius: 20,
+              padding: '3px 10px',
+              fontSize: 11,
+              color: 'var(--accent)',
+              fontWeight: 600,
+              marginBottom: 14,
+            }}
+          >
+            <Cpu size={11} />
+            {t('chromeAiSetupFree')}
+          </div>
+
+          <p style={{ color: 'var(--text-2)', fontSize: 13, lineHeight: 1.7, marginBottom: 18, margin: '0 0 18px' }}>
+            {t('chromeAiSetupDescription')}
+          </p>
+
+          {/* Status-specific message */}
+          {(isDownloading || isDownloadable) && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+                padding: '10px 12px',
+                background: 'var(--warning-bg, #fff8e1)',
+                border: '1px solid var(--warning, #f59e0b)',
+                borderRadius: 8,
+                marginBottom: 18,
+                fontSize: 12,
+                color: 'var(--warning-text, #b45309)',
+                lineHeight: 1.5,
+              }}
+            >
+              <Cpu size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+              {t('chromeAiDownloadingMessage')}
+            </div>
+          )}
+          {!isDownloading && !isDownloadable && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+                padding: '10px 12px',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                marginBottom: 18,
+                fontSize: 12,
+                color: 'var(--text-3)',
+                lineHeight: 1.5,
+              }}
+            >
+              <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+              {t('chromeAiUnsupportedMessage')}
+            </div>
+          )}
+
+          {/* Setup steps */}
+          <div style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 700, marginBottom: 10 }}>
+            {t('chromeAiSetupStepsTitle')}
+          </div>
+          <ol style={{ margin: '0 0 18px', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {([
+              t('chromeAiSetupStep1'),
+              t('chromeAiSetupStep2'),
+              t('chromeAiSetupStep3'),
+            ] as string[]).map((step, i) => (
+              <li key={i} style={{ color: 'var(--text-2)', fontSize: 13, lineHeight: 1.6 }}>
+                {i === 1 ? (
+                  <>
+                    {step.split('chrome://flags').map((part, j) =>
+                      j === 0 ? part : (
+                        <>
+                          <code
+                            key={j}
+                            style={{
+                              background: 'var(--surface-2)',
+                              border: '1px solid var(--border)',
+                              borderRadius: 4,
+                              padding: '1px 5px',
+                              fontSize: 11,
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            chrome://flags
+                          </code>
+                          {part}
+                        </>
+                      )
+                    )}
+                  </>
+                ) : step}
+              </li>
+            ))}
+          </ol>
+
+          {/* Reference link */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
+            <CheckCircle size={12} color="var(--accent)" />
+            <span style={{ color: 'var(--text-3)', fontSize: 12 }}>{t('chromeAiSetupRefLabel')}:</span>
+            <a
+              href={CHROME_AI_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'var(--accent)',
+                fontSize: 12,
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+              }}
+            >
+              developer.chrome.com/docs/ai/built-in
+              <ExternalLink size={11} />
+            </a>
+          </div>
+
+          <button
+            onClick={onClose}
+            style={{
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              borderRadius: 7,
+              padding: '0 16px',
+              height: 34,
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+              color: 'var(--text-2)',
+            }}
+          >
+            {t('settingsCancel')}
+          </button>
+        </Panel>
+      </Backdrop>
+    )
   }
 
   if (phase === 'loading') {
