@@ -15,7 +15,6 @@ interface ChromeLanguageModelCreateOptions {
 interface ChromeLanguageModelSession {
   prompt(
     input: string | Array<string | ChromeLanguageModelImageInput>,
-    options?: { signal?: AbortSignal },
   ): Promise<string>
   destroy(): void
 }
@@ -157,6 +156,24 @@ function sanitizePersons(persons: ExtractedPerson[]): ExtractedPerson[] {
   return fixed.map((p) => (cycleBreakers.has(p.id) ? { ...p, parentId: null } : p))
 }
 
+/** Wrap a prompt Promise with a 20-second timeout. */
+function withPromptTimeout<T>(promise: Promise<T>, timeoutMessage: string): Promise<T> {
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(timeoutMessage)), PROMPT_TIMEOUT_MS),
+  )
+  return Promise.race([promise, timeoutPromise]).catch((err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (
+      msg.includes('タイムアウト') ||
+      msg.includes('message channel closed') ||
+      msg.includes('message port closed')
+    ) {
+      throw new Error(timeoutMessage)
+    }
+    throw err
+  }) as Promise<T>
+}
+
 export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPerson[]> {
   if (typeof LanguageModel === 'undefined' || LanguageModel == null) {
     throw new Error('Chrome Built-in AI はこのブラウザで利用できません。')
@@ -194,31 +211,13 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
   try {
     imageBitmap = await createImageBitmap(file)
 
-    const abortController = new AbortController()
-    const timeoutId = setTimeout(() => abortController.abort(), PROMPT_TIMEOUT_MS)
-
-    let raw: string
-    try {
-      raw = await session.prompt(
-        [
-          '以下の組織図画像を解析してJSONを返してください。',
-          { type: 'image', content: imageBitmap },
-        ],
-        { signal: abortController.signal },
-      )
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (
-        (err instanceof DOMException && err.name === 'AbortError') ||
-        msg.includes('message channel closed') ||
-        msg.includes('message port closed')
-      ) {
-        throw new Error('解析がタイムアウトしました（20秒超過）。画像をシンプルにして再試行してください。')
-      }
-      throw err
-    } finally {
-      clearTimeout(timeoutId)
-    }
+    const raw = await withPromptTimeout(
+      session.prompt([
+        '以下の組織図画像を解析してJSONを返してください。',
+        { type: 'image', content: imageBitmap },
+      ]),
+      '解析がタイムアウトしました（20秒超過）。画像をシンプルにして再試行してください。',
+    )
 
     let parsed: unknown
     try {
@@ -272,29 +271,11 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
   )
   const session = await Promise.race([sessionPromise, sessionTimeoutPromise])
 
-  const abortController = new AbortController()
-  const timeoutId = setTimeout(() => abortController.abort(), PROMPT_TIMEOUT_MS)
-
   try {
-    let raw: string
-    try {
-      raw = await session.prompt(
-        `以下の組織構造を解析してJSONを返してください:\n\n${processedText}`,
-        { signal: abortController.signal },
-      )
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (
-        (err instanceof DOMException && err.name === 'AbortError') ||
-        msg.includes('message channel closed') ||
-        msg.includes('message port closed')
-      ) {
-        throw new Error('解析がタイムアウトしました（20秒超過）。入力テキストを短くするか、シンプルな構造にして再試行してください。')
-      }
-      throw err
-    } finally {
-      clearTimeout(timeoutId)
-    }
+    const raw = await withPromptTimeout(
+      session.prompt(`以下の組織構造を解析してJSONを返してください:\n\n${processedText}`),
+      '解析がタイムアウトしました（20秒超過）。入力テキストを短くするか、シンプルな構造にして再試行してください。',
+    )
 
     let parsed: unknown
     try {
