@@ -302,7 +302,7 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
             <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
               {t('chromeAiImportAnalyzing')}
             </div>
-            <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 16 }}>{t('chromeAiImportHint')}</div>
+            <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 16 }}>{t('chromeAiLoadingHint')}</div>
             <button
               onClick={onClose}
               style={{
