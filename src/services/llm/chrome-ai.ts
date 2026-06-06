@@ -192,7 +192,8 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
   let session: ChromeLanguageModelSession
   try {
     const sessionPromise = LanguageModel.create({
-      expectedInputs: [{ type: 'text' }, { type: 'image' }],
+      expectedInputs: [{ type: 'image' }],
+      expectedOutputs: [{ type: 'text', languages: ['ja'] }],
       initialPrompts: [{ role: 'system', content: IMAGE_SYSTEM_PROMPT }],
     })
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -260,7 +261,10 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
 
   const SESSION_TIMEOUT_MS = 60_000
   const sessionPromise = LanguageModel.create({
-    expectedInputs: [{ type: 'text' }],
+    // Note: expectedInputs is omitted for text-only sessions (default).
+    // expectedOutputs specifies output language so Chrome does not issue a
+    // "No output language was specified" warning that may cause port closure.
+    expectedOutputs: [{ type: 'text', languages: ['ja'] }],
     initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
   })
   const sessionTimeoutPromise = new Promise<never>((_, reject) =>
