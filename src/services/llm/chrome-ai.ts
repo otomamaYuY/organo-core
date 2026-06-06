@@ -48,8 +48,9 @@ Rules:
 - Output ONLY valid JSON. No markdown, no code blocks.
 - Assign each person a unique short id (e.g. "p1", "p2", ...).
 - Set parentId to null for the root (top-level person).
-- If a field is not mentioned, set it to null.
+- If a field is not mentioned, set it to null. ALL fields except id, parentId, and name are nullable.
 - Never hallucinate. Only include information present in the input.
+- If a person's position in the hierarchy is ambiguous, make your best guess based on context.
 
 Output schema:
 {
@@ -58,7 +59,7 @@ Output schema:
       "id": "p1",
       "parentId": null,
       "name": "Full Name",
-      "role": "Job Title",
+      "role": "Job Title or null",
       "department": "Department Name or null",
       "email": "email@example.com or null",
       "employmentType": "full-time | part-time | contract | intern | advisor | null"
@@ -73,7 +74,7 @@ Rules:
 - Output ONLY valid JSON. No markdown, no code blocks.
 - Assign each person a unique short id (e.g. "p1", "p2", ...).
 - Set parentId to null for the root (top-level person).
-- If a field is not visible in the image, set it to null.
+- If a field is not visible in the image, set it to null. ALL fields except id, parentId, and name are nullable.
 - Never hallucinate. Only include information visible in the image.
 
 Output schema:
@@ -83,7 +84,7 @@ Output schema:
       "id": "p1",
       "parentId": null,
       "name": "Full Name",
-      "role": "Job Title",
+      "role": "Job Title or null",
       "department": "Department Name or null",
       "email": "email@example.com or null",
       "employmentType": "full-time | part-time | contract | intern | advisor | null"
@@ -157,6 +158,7 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
   try {
     const sessionPromise = LanguageModel.create({
       expectedInputs: [{ type: 'text' }, { type: 'image' }],
+      expectedOutputs: [{ type: 'text', languages: ['*'] }],
       initialPrompts: [{ role: 'system', content: IMAGE_SYSTEM_PROMPT }],
     })
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -177,7 +179,13 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
     const raw = await session.prompt([
       '以下の組織図画像を解析してJSONを返してください。',
       { type: 'image', content: imageBitmap },
-    ])
+    ]).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('message channel closed') || msg.includes('message port closed')) {
+        throw new Error('解析がタイムアウトしました。画像を確認して再試行してください。')
+      }
+      throw err
+    })
 
     let parsed: unknown
     try {
@@ -218,6 +226,8 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
 
   const SESSION_TIMEOUT_MS = 60_000
   const sessionPromise = LanguageModel.create({
+    expectedInputs: [{ type: 'text' }],
+    expectedOutputs: [{ type: 'text', languages: ['*'] }],
     initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT }],
   })
   const timeoutPromise = new Promise<never>((_, reject) =>
@@ -231,7 +241,13 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
   try {
     const raw = await session.prompt(
       `以下の組織構造を解析してJSONを返してください:\n\n${text}`,
-    )
+    ).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('message channel closed') || msg.includes('message port closed')) {
+        throw new Error('解析がタイムアウトしました。入力テキストを短くするか、シンプルな構造にして再試行してください。')
+      }
+      throw err
+    })
 
     let parsed: unknown
     try {
