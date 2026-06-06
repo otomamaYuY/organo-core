@@ -13,7 +13,7 @@ interface SelectRect {
 const MIN_DRAG_PX = 4
 
 export function RightClickSelect() {
-  const { project } = useReactFlow()
+  const { screenToFlowPosition } = useReactFlow()
   const { nodes, edges, onNodesChange, onEdgesChange } = useOrgStore()
   const [rect, setRect] = useState<SelectRect | null>(null)
   const isSelecting = useRef(false)
@@ -69,8 +69,8 @@ export function RightClickSelect() {
         return
       }
 
-      const topLeft = project({ x: x1, y: y1 })
-      const bottomRight = project({ x: x2, y: y2 })
+      const topLeft = screenToFlowPosition({ x: x1, y: y1 })
+      const bottomRight = screenToFlowPosition({ x: x2, y: y2 })
 
       const selectedIds = new Set<string>()
       const nodeChanges: NodeChange[] = nodes.map(n => {
@@ -102,7 +102,7 @@ export function RightClickSelect() {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [rect, nodes, edges, onNodesChange, onEdgesChange, project])
+  }, [rect, nodes, edges, onNodesChange, onEdgesChange, screenToFlowPosition])
 
   if (!rect) return null
 

@@ -36,7 +36,7 @@ function buildNodesAndEdges(persons: ExtractedPerson[]): {
     const data: OrgPersonData = {
       kind: 'person',
       name: p.name,
-      role: p.role,
+      role: p.role ?? '',
       department: p.department ?? '',
       email: p.email ?? undefined,
       employmentType: p.employmentType ?? undefined,
