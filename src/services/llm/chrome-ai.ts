@@ -39,7 +39,10 @@ export async function getChromeAiAvailability(): Promise<ChromeAiAvailability> {
   if (typeof window === 'undefined') return 'unsupported'
   if (typeof LanguageModel === 'undefined' || LanguageModel == null) return 'unsupported'
   try {
-    return await LanguageModel.availability()
+    // Pass expectedOutputs so Chrome doesn't log "No output language was specified"
+    return await LanguageModel.availability({
+      expectedOutputs: [{ type: 'text', languages: ['ja'] }],
+    })
   } catch {
     return 'unsupported'
   }
