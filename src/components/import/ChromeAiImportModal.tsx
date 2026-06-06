@@ -26,6 +26,7 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
   const [result, setResult] = useState<ExtractedPerson[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [availability, setAvailability] = useState<ChromeAiAvailability | 'checking'>('checking')
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
   // Image tab state
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -38,6 +39,16 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
   useEffect(() => {
     getChromeAiAvailability().then(setAvailability)
   }, [])
+
+  // Elapsed-time counter shown during loading so users know the model is working.
+  useEffect(() => {
+    if (phase !== 'loading') {
+      setElapsedSeconds(0)
+      return
+    }
+    const id = setInterval(() => setElapsedSeconds((s) => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [phase])
 
   // Revoke object URL on unmount
   useEffect(() => {
@@ -302,7 +313,21 @@ export function ChromeAiImportModal({ onClose }: ChromeAiImportModalProps) {
             <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
               {t('chromeAiImportAnalyzing')}
             </div>
-            <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 16 }}>{t('chromeAiLoadingHint')}</div>
+            <div style={{ color: 'var(--text-3)', fontSize: 12, marginBottom: 4 }}>
+              {t('chromeAiLoadingHint')}
+            </div>
+            <div
+              style={{
+                color: elapsedSeconds >= 10 ? 'var(--accent)' : 'var(--text-3)',
+                fontSize: 13,
+                fontWeight: 600,
+                fontVariantNumeric: 'tabular-nums',
+                marginBottom: 16,
+                transition: 'color 0.3s',
+              }}
+            >
+              {elapsedSeconds}秒経過
+            </div>
             <button
               onClick={onClose}
               style={{
