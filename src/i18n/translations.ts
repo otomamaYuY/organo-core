@@ -190,6 +190,25 @@ export const translations = {
   chromeAiImportAnalyze: { ja: 'AIで組織図を解析 →', en: 'Parse with AI →' },
   chromeAiImportAnalyzing: { ja: 'Gemini Nano が解析中...', en: 'Gemini Nano is analyzing...' },
   chromeAiImportHint: { ja: 'APIキー不要・オフライン動作', en: 'No API key · Works offline' },
+  chromeAiSetupTitle: { ja: 'Gemini Nano のセットアップが必要です', en: 'Gemini Nano Setup Required' },
+  chromeAiSetupFree: { ja: '無料・安全・完全オフライン動作', en: 'Free · Secure · Fully Offline' },
+  chromeAiSetupDescription: {
+    ja: 'このAIインポート機能は Chrome に内蔵された Gemini Nano を使用します。APIキーは不要で、データは端末の外に出ません。',
+    en: 'This AI import feature uses Gemini Nano built into Chrome. No API key needed — your data never leaves your device.',
+  },
+  chromeAiSetupStepsTitle: { ja: 'セットアップ手順', en: 'How to set up' },
+  chromeAiSetupStep1: { ja: 'Chrome 127 以降を使用していることを確認する（Dev / Canary チャンネル推奨）', en: 'Make sure you are using Chrome 127 or later (Dev / Canary channel recommended)' },
+  chromeAiSetupStep2: { ja: 'アドレスバーに chrome://flags と入力し、"Prompt API for Gemini Nano" を有効にする', en: 'Open chrome://flags and enable "Prompt API for Gemini Nano"' },
+  chromeAiSetupStep3: { ja: 'Chrome を再起動する（モデルのダウンロードが自動で開始されます）', en: 'Restart Chrome (model download starts automatically)' },
+  chromeAiSetupRefLabel: { ja: '公式ドキュメント', en: 'Official docs' },
+  chromeAiDownloadingMessage: {
+    ja: 'Gemini Nano をダウンロード中です。完了後にもう一度お試しください。',
+    en: 'Gemini Nano is downloading. Please try again after it finishes.',
+  },
+  chromeAiUnsupportedMessage: {
+    ja: 'お使いの Chrome は Gemini Nano をサポートしていません。上記の手順でセットアップしてください。',
+    en: 'Your Chrome does not support Gemini Nano yet. Follow the steps above to set it up.',
+  },
   aiImportNeedsConfig: {
     ja: 'この機能を使うにはLLMプロバイダの設定が必要です。',
     en: 'Please configure your LLM provider to use this feature.',
