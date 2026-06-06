@@ -9,6 +9,10 @@ interface ChromeLanguageModelCreateOptions {
   initialPrompts?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
   expectedInputs?: Array<{ type: 'text' | 'image' | 'audio'; languages?: string[] }>
   expectedOutputs?: Array<{ type: 'text'; languages?: string[] }>
+  /** 0 = deterministic (greedy). Default: 1.0 */
+  temperature?: number
+  /** Number of top tokens to sample from. 1 = greedy decoding. Default: 3 */
+  topK?: number
 }
 
 interface ChromeLanguageModelSession {
@@ -69,10 +73,10 @@ const IMAGE_PROMPT =
 
 const MAX_INPUT_CHARS = 8000
 /**
- * 30 s gives Gemini Nano enough headroom on slower devices while still
- * providing timely feedback if the model is stuck.
+ * 60 s to accommodate CPU-only Gemini Nano inference on slower devices.
+ * The elapsed-time counter in the UI keeps users informed while they wait.
  */
-const PROMPT_TIMEOUT_MS = 30_000
+const PROMPT_TIMEOUT_MS = 60_000
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -181,6 +185,8 @@ export async function analyzeImageWithChromeAI(file: File): Promise<ExtractedPer
       LanguageModel.create({
         expectedInputs: [{ type: 'image' }],
         expectedOutputs: [{ type: 'text', languages: ['ja'] }],
+        temperature: 0,
+        topK: 1,
       }),
       new Promise<never>((_, reject) =>
         setTimeout(
@@ -229,6 +235,10 @@ export async function analyzeTextWithChromeAI(text: string): Promise<ExtractedPe
       expectedOutputs: [{ type: 'text', languages: ['ja'] }],
       // No initialPrompts — the compact buildTextPrompt() includes all instructions.
       // Keeping the session lean reduces model initialization time on slow devices.
+      // topK:1 + temperature:0 = greedy decoding: fastest inference path, fully
+      // deterministic, and most likely to produce well-formed JSON.
+      temperature: 0,
+      topK: 1,
     }),
     new Promise<never>((_, reject) =>
       setTimeout(
