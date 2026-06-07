@@ -319,7 +319,6 @@ export const translations = {
   privacyStorageDeleteKey: { ja: 'このデータを削除', en: 'Delete this data' },
   privacyStorageDeleteConfirm: { ja: '削除してページを再読み込みします。よろしいですか？', en: 'This will delete the data and reload the page. Continue?' },
   privacyKeyOrgData: { ja: '組織図データ（ノード・エッジ）', en: 'Org chart data (nodes & edges)' },
-  privacyKeyLlmSettings: { ja: 'AI設定', en: 'AI settings' },
   privacyKeyTheme: { ja: '表示テーマ', en: 'Display theme' },
   privacyKeyLocale: { ja: '言語設定', en: 'Language setting' },
   privacyKeyLandingSeen: { ja: '初回案内の表示状態', en: 'Onboarding splash state' },

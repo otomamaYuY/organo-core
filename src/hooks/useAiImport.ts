@@ -1,18 +1,13 @@
 import { useState, useCallback } from 'react'
-import { importGraphFromImage, type ExtractedPerson } from '@/services/llm'
-import { useLlmSettingsStore } from '@/store/useLlmSettingsStore'
+import type { ExtractedPerson } from '@/services/llm'
 import { useOrgStore } from '@/store/useOrgStore'
 import { toast } from '@/store/useToastStore'
 import { translations } from '@/i18n/translations'
 import { useLocaleStore } from '@/store/useLocaleStore'
 import type { OrgNode, OrgEdge, OrgPersonData } from '@/types'
 
-export type AiImportPhase = 'idle' | 'loading' | 'preview' | 'error'
-
 interface AiImportState {
-  phase: AiImportPhase
   result: ExtractedPerson[]
-  errorMessage: string | null
 }
 
 const generateNodeId = () => `node_ai_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
@@ -70,40 +65,13 @@ function buildNodesAndEdges(persons: ExtractedPerson[]): {
 
 export function useAiImport() {
   const [state, setState] = useState<AiImportState>({
-    phase: 'idle',
     result: [],
-    errorMessage: null,
   })
 
-  const llmStore = useLlmSettingsStore()
   const locale = useLocaleStore((s) => s.locale)
   const mergePersonNodes = useOrgStore((s) => s.mergePersonNodes)
   const replaceWithPersonNodes = useOrgStore((s) => s.replaceWithPersonNodes)
   const applyAutoLayout = useOrgStore((s) => s.applyAutoLayout)
-
-  const analyze = useCallback(
-    async (base64: string, mimeType: string) => {
-      setState({ phase: 'loading', result: [], errorMessage: null })
-      try {
-        const persons = await importGraphFromImage(base64, mimeType, {
-          provider: llmStore.provider,
-          openai: llmStore.openai,
-          bedrock: llmStore.bedrock,
-          azureOpenai: llmStore.azureOpenai,
-        })
-        setState({ phase: 'preview', result: persons, errorMessage: null })
-      } catch (err) {
-        let message = err instanceof Error ? err.message : 'Unknown error occurred'
-        // Network/CORS error
-        if (message === 'Failed to fetch' || message.includes('NetworkError')) {
-          message =
-            'ネットワークエラーが発生しました。インターネット接続を確認してください。(Network error — check your connection)'
-        }
-        setState({ phase: 'error', result: [], errorMessage: message })
-      }
-    },
-    [llmStore],
-  )
 
   const applyToChart = useCallback(
     (persons: ExtractedPerson[], mode: 'append' | 'replace') => {
@@ -119,20 +87,17 @@ export function useAiImport() {
       }
       // Auto-layout after merge for clean hierarchy
       setTimeout(() => applyAutoLayout(), 50)
-      setState({ phase: 'idle', result: [], errorMessage: null })
+      setState({ result: [] })
     },
     [mergePersonNodes, replaceWithPersonNodes, applyAutoLayout, locale],
   )
 
   const reset = useCallback(() => {
-    setState({ phase: 'idle', result: [], errorMessage: null })
+    setState({ result: [] })
   }, [])
 
   return {
-    phase: state.phase,
     result: state.result,
-    errorMessage: state.errorMessage,
-    analyze,
     applyToChart,
     reset,
   }

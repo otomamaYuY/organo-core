@@ -9,7 +9,6 @@ export interface StorageKeyInfo {
 
 export const ORGANO_KEYS: readonly { key: string; descKey: TranslationKey }[] = [
   { key: 'organo-core-data',    descKey: 'privacyKeyOrgData' },
-  { key: 'organo-llm-settings', descKey: 'privacyKeyLlmSettings' },
   { key: 'organo-theme',        descKey: 'privacyKeyTheme' },
   { key: 'organo-locale',       descKey: 'privacyKeyLocale' },
   { key: 'organo-landing-seen', descKey: 'privacyKeyLandingSeen' },
