@@ -291,7 +291,13 @@ export const translations = {
 
   // ── Privacy Badge & Center ────────────────────────────
   privacyBadgeOffline: { ja: 'オフライン動作中', en: 'Offline' },
+  privacyBadgeSending:  { ja: 'AI送信中', en: 'Sending...' },
   privacyBadgeTooltip: { ja: 'プライバシー詳細を表示', en: 'View privacy details' },
+  privacyNetworkOffline:      { ja: '外部通信なし', en: 'No external communication' },
+  privacyNetworkSending:      { ja: 'OpenAI へ送信中', en: 'Sending to OpenAI' },
+  privacyNetworkSendingDesc:  { ja: 'AI画像インポートのためにOpenAI APIへ通信しています', en: 'Communicating with OpenAI API for AI image import' },
+  privacyNetworkLastActivity: { ja: '最終通信', en: 'Last sent' },
+  privacyNetworkNeverSent:    { ja: 'このセッションは一度も外部送信していません', en: 'No external requests sent this session' },
   privacyCenterTitle: { ja: 'プライバシーセンター', en: 'Privacy Center' },
 
   // ── Privacy: Does / Doesn't ───────────────────────────

@@ -1,11 +1,16 @@
 import { useState } from 'react'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Radio } from 'lucide-react'
 import { useT } from '@/hooks/useT'
+import { useNetworkStore } from '@/store/useNetworkStore'
 import { PrivacyCenterModal } from './PrivacyCenterModal'
 
 export function PrivacyBadge() {
   const t = useT()
   const [showModal, setShowModal] = useState(false)
+  const isSending = useNetworkStore(s => s.activeCount > 0)
+
+  const dotColor = isSending ? 'var(--warning, #f59e0b)' : '#22c55e'
+  const label = isSending ? t('privacyBadgeSending') : t('privacyBadgeOffline')
 
   return (
     <>
@@ -40,16 +45,23 @@ export function PrivacyBadge() {
           e.currentTarget.style.color = 'var(--accent)'
         }}
       >
-        <ShieldCheck size={13} strokeWidth={2.5} />
-        {t('privacyBadgeOffline')}
-        {/* Static green dot indicating zero external communication */}
+        {isSending
+          ? <Radio size={13} strokeWidth={2.5} />
+          : <ShieldCheck size={13} strokeWidth={2.5} />
+        }
+        {label}
+        {/* Live dot: green = offline, amber = sending to OpenAI */}
         <span
           style={{
             width: 6,
             height: 6,
             borderRadius: '50%',
-            background: '#22c55e',
+            background: dotColor,
             flexShrink: 0,
+            transition: 'background 0.3s',
+            ...(isSending && {
+              boxShadow: `0 0 0 2px var(--warning, #f59e0b)44`,
+            }),
           }}
         />
       </button>

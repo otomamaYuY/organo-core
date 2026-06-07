@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { X, ShieldCheck, CheckCircle, XCircle, HardDrive, Trash2, AlertTriangle } from 'lucide-react'
+import { X, ShieldCheck, CheckCircle, XCircle, HardDrive, Trash2, AlertTriangle, Wifi, WifiOff } from 'lucide-react'
 import { useT } from '@/hooks/useT'
+import { useNetworkStore } from '@/store/useNetworkStore'
 import {
   getStorageInfo,
   clearAllAppData,
@@ -18,6 +19,8 @@ export function PrivacyCenterModal({ onClose }: PrivacyCenterModalProps) {
   const [confirmingClearAll, setConfirmingClearAll] = useState(false)
   const storageInfos = getStorageInfo()
   const total = totalBytes(storageInfos)
+  const isSending = useNetworkStore(s => s.activeCount > 0)
+  const lastActivityAt = useNetworkStore(s => s.lastActivityAt)
 
   const handleClearAll = () => {
     clearAllAppData()
@@ -69,6 +72,50 @@ export function PrivacyCenterModal({ onClose }: PrivacyCenterModalProps) {
           >
             <X size={18} />
           </button>
+        </div>
+
+        {/* ── Network Status ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 14px',
+            marginBottom: 16,
+            background: isSending ? 'rgba(245,158,11,0.08)' : 'var(--accent-bg)',
+            border: `1px solid ${isSending ? 'rgba(245,158,11,0.35)' : 'var(--accent-border)'}`,
+            borderRadius: 10,
+            transition: 'background 0.3s, border-color 0.3s',
+          }}
+        >
+          {isSending
+            ? <Wifi size={15} color="var(--warning, #f59e0b)" />
+            : <WifiOff size={15} color="var(--accent)" />
+          }
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: isSending ? 'var(--warning, #f59e0b)' : 'var(--accent)' }}>
+              {isSending ? t('privacyNetworkSending') : t('privacyNetworkOffline')}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+              {isSending
+                ? t('privacyNetworkSendingDesc')
+                : lastActivityAt
+                  ? `${t('privacyNetworkLastActivity')}: ${new Date(lastActivityAt).toLocaleTimeString()}`
+                  : t('privacyNetworkNeverSent')
+              }
+            </div>
+          </div>
+          {/* Live indicator dot */}
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: isSending ? 'var(--warning, #f59e0b)' : '#22c55e',
+              flexShrink: 0,
+              transition: 'background 0.3s',
+            }}
+          />
         </div>
 
         {/* ── Does / Doesn't ── */}

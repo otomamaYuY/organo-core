@@ -1,5 +1,6 @@
 import { llmOutputSchema, type ExtractedPerson } from './schema'
 import { SYSTEM_PROMPT, USER_PROMPT } from './prompt'
+import { useNetworkStore } from '@/store/useNetworkStore'
 
 interface OpenAICredentials {
   apiKey: string
@@ -64,43 +65,49 @@ export async function analyzeImageWithOpenAI(
     },
   ]
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${creds.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages,
-      response_format: { type: 'json_object' },
-      max_tokens: 4096,
-      temperature: 0,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}))
-    const apiMessage = (errorBody as { error?: { message?: string } }).error?.message ?? ''
-    throw new Error(classifyOpenAIError(response.status, apiMessage))
-  }
-
-  const data = (await response.json()) as OpenAIResponse
-  const raw = data.choices[0]?.message?.content
-
-  if (!raw) throw new Error('OpenAI returned empty response')
-
-  let parsed: unknown
+  const { begin, end } = useNetworkStore.getState()
+  begin()
   try {
-    parsed = JSON.parse(raw)
-  } catch {
-    throw new Error('OpenAI returned invalid JSON')
-  }
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${creds.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages,
+        response_format: { type: 'json_object' },
+        max_tokens: 4096,
+        temperature: 0,
+      }),
+    })
 
-  const result = llmOutputSchema.safeParse(parsed)
-  if (!result.success) {
-    throw new Error(`Response validation failed: ${result.error.issues[0]?.message ?? 'unknown'}`)
-  }
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}))
+      const apiMessage = (errorBody as { error?: { message?: string } }).error?.message ?? ''
+      throw new Error(classifyOpenAIError(response.status, apiMessage))
+    }
 
-  return result.data.persons
+    const data = (await response.json()) as OpenAIResponse
+    const raw = data.choices[0]?.message?.content
+
+    if (!raw) throw new Error('OpenAI returned empty response')
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      throw new Error('OpenAI returned invalid JSON')
+    }
+
+    const result = llmOutputSchema.safeParse(parsed)
+    if (!result.success) {
+      throw new Error(`Response validation failed: ${result.error.issues[0]?.message ?? 'unknown'}`)
+    }
+
+    return result.data.persons
+  } finally {
+    end()
+  }
 }
