@@ -7,6 +7,14 @@ on:
 
 permissions:
   contents: write
+  actions: none
+  checks: none
+  deployments: none
+  id-token: none
+  issues: none
+  packages: none
+  pull-requests: none
+  statuses: none
 
 jobs:
   release:

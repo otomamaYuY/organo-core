@@ -1,5 +1,6 @@
 // IMPORTANT: Any new action that modifies nodes or edges MUST set isDirty: true
 import { create } from 'zustand'
+import { z } from 'zod'
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow'
 import type { OnNodesChange, OnEdgesChange, OnConnect } from 'reactflow'
 import type {
@@ -11,6 +12,70 @@ import type {
   ContextMenuState,
 } from '@/types'
 import { calcAutoLayout } from '@/utils/layout'
+
+// ── JSON import schema (Zod) ─────────────────────────────────────────────────
+// Validates structure and sanitizes values. image field restricted to safe URL
+// schemes to prevent javascript: URI injection via crafted JSON files.
+
+const SAFE_IMAGE_RE = /^(https?:\/\/|data:image\/)/i
+
+const orgPersonDataSchema = z.object({
+  kind: z.literal('person'),
+  name: z.string().min(1).max(500),
+  role: z.string().max(500).optional(),
+  department: z.string().max(500).optional(),
+  image: z.string().regex(SAFE_IMAGE_RE, 'Invalid image URL scheme').optional(),
+  email: z.string().max(500).optional(),
+  phone: z.string().max(100).optional(),
+  employmentType: z.enum(['full-time', 'part-time', 'contract', 'intern', 'advisor']).nullable().optional(),
+  tags: z.array(z.string().max(100)).max(50).optional(),
+  isCollapsed: z.boolean().optional(),
+  childCount: z.number().int().min(0).optional(),
+})
+
+const orgUnitDataSchema = z.object({
+  kind: z.literal('org-unit'),
+  unitName: z.string().min(1).max(500),
+  unitType: z.enum(['company', 'headquarters', 'bureau', 'department', 'division', 'section', 'unit', 'post']).optional(),
+  headPersonName: z.string().max(500).optional(),
+  memberCount: z.number().int().min(0).optional(),
+  childUnitCount: z.number().int().min(0).optional(),
+  description: z.string().max(2000).optional(),
+  tags: z.array(z.string().max(100)).max(50).optional(),
+  isCollapsed: z.boolean().optional(),
+  childCount: z.number().int().min(0).optional(),
+})
+
+const orgNodeSchema = z.object({
+  id: z.string().min(1).max(200),
+  type: z.literal('orgNode'),
+  position: z.object({ x: z.number(), y: z.number() }),
+  data: z.union([orgPersonDataSchema, orgUnitDataSchema]),
+  selected: z.boolean().optional(),
+  dragging: z.boolean().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+})
+
+const orgEdgeSchema = z.object({
+  id: z.string().min(1).max(200),
+  source: z.string().min(1).max(200),
+  target: z.string().min(1).max(200),
+  type: z.string().max(100).optional(),
+  data: z.object({
+    relationshipType: z.enum(['reports-to', 'dotted-line', 'advisory']).optional(),
+  }).optional(),
+  animated: z.boolean().optional(),
+  selected: z.boolean().optional(),
+  label: z.string().max(500).optional(),
+  sourceHandle: z.string().max(100).nullable().optional(),
+  targetHandle: z.string().max(100).nullable().optional(),
+})
+
+const importJsonSchema = z.object({
+  nodes: z.array(orgNodeSchema).min(1).max(5000),
+  edges: z.array(orgEdgeSchema).max(20000),
+})
 
 const generateId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
@@ -489,11 +554,19 @@ export const useOrgStore = create<OrgState>((set, get) => ({
 
   importFromJson: json => {
     try {
-      const data = json as { nodes: OrgNode[]; edges: OrgEdge[] }
-      if (!data.nodes || !data.edges) throw new Error('Invalid format')
-      set({ nodes: data.nodes, edges: data.edges, selectedNodeId: null, isDirty: true })
-    } catch {
-      alert('JSONファイルの形式が正しくありません')
+      const result = importJsonSchema.safeParse(json)
+      if (!result.success) {
+        throw new Error(result.error.issues.map(i => i.message).join(', '))
+      }
+      set({
+        nodes: result.data.nodes as OrgNode[],
+        edges: result.data.edges as OrgEdge[],
+        selectedNodeId: null,
+        isDirty: true,
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      alert(`JSONファイルの形式が正しくありません: ${msg}`)
     }
   },
 

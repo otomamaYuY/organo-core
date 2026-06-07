@@ -83,17 +83,22 @@ const PROMPT_TIMEOUT_MS = 120_000
 const SESSION_TIMEOUT_MS = 60_000
 
 // ── Debug logger ─────────────────────────────────────────────────────────────
+// Gated behind DEV flag — HR data (names, roles) must not appear in production console.
+
+const IS_DEV = import.meta.env.DEV
 
 function elapsed(startMs: number): string {
   return `${((performance.now() - startMs) / 1000).toFixed(1)}s`
 }
 
 function dbg(msg: string): void {
+  if (!IS_DEV) return
   // eslint-disable-next-line no-console
   console.log(`[ChromeAI] ${msg}`)
 }
 
 function dbgError(msg: string, err: unknown): void {
+  if (!IS_DEV) return
   // eslint-disable-next-line no-console
   console.error(
     `[ChromeAI] ${msg}`,
