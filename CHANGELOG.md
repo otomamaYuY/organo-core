@@ -4,6 +4,67 @@ All notable changes to **organo-core** are documented in this file.
 
 ---
 
+## [v1.7.1] — 2026-06-08
+
+### Improvements
+
+#### Auto-focus for Key UI Elements
+
+The app now automatically moves focus to the most relevant button or input field at the right moment, so users can act immediately without having to click first.
+
+- **Landing screen** — the Start Free button receives focus with a ripple animation after the welcome screen appears.
+- **Onboarding tour** — the Next button is focused at each step, allowing keyboard-only navigation with Enter or Space.
+- **Person node sidebar** — the Name field is focused as soon as a person node is selected.
+- **Org unit sidebar** — the Unit Name field is focused when an org unit node is selected.
+
+#### Stricter Privacy and Data Safety via Privacy Center
+
+The Privacy Center provides full transparency and control over locally stored data.
+
+- All chart data is stored exclusively in the browser. Nothing is transmitted to any server.
+- An always-visible offline badge confirms that the app is running without external network activity.
+- Every outbound network request is intercepted and displayed in the Privacy Center, so users can verify that no data leaves the browser at any time.
+- A one-click data clear button lets users wipe all locally stored data instantly.
+
+---
+
+## [v1.7.0] — 2026-06-07
+
+### New Features
+
+#### Gemini Nano AI Import (Chrome Built-in AI)
+
+Import organization data from plain text using Google's Gemini Nano model running entirely in Chrome — no API key, no server, no cost.
+
+- Paste any free-form text describing your organization and the model extracts names, roles, departments, and reporting relationships.
+- Requires Chrome 138 or later with the Built-in AI / Prompt API origin trial enabled.
+- All inference runs locally in the browser; no data leaves the device.
+- A preview table lets you review, edit, or remove rows before applying changes to the chart.
+
+#### Privacy Center
+
+A dedicated privacy panel accessible from the toolbar badge.
+
+- Offline badge: a persistent indicator showing that the app is operating without any network transmission.
+- Storage viewer: lists all keys stored in localStorage with their sizes.
+- Data clear button: removes all app data from the browser in one action.
+- Network monitor: intercepts and logs all outbound fetch and XHR requests in real time, so users can confirm that nothing is sent externally.
+
+#### Bilingual Onboarding Tour
+
+The step-by-step onboarding tour now displays Japanese and English side by side in every tooltip. No language toggle is needed — both languages are shown by default.
+
+### Security
+
+- Fixed 7 vulnerabilities identified in an OSS security review, including dependency pinning, Content Security Policy hardening, and removal of unsafe dynamic patterns.
+
+### Maintenance
+
+- Removed dead OpenAI and LLM provider code that was no longer reachable after the AI settings panel was simplified.
+- Cleaned up the storage viewer to remove entries that referenced the removed OpenAI integration.
+
+---
+
 ## [v1.6.2] — 2026-06-06
 
 ### Maintenance

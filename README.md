@@ -17,9 +17,13 @@ An interactive organization chart editor built with React Flow.
 ## Features
 
 - Interactive drag-and-drop organization chart editor
-- Person and Department node creation and editing
+- Person and org unit node creation and editing
 - Export to JSON, CSV, HTML, PNG, SVG, and PDF
-- Japanese and English UI (i18n)
+- AI-powered import via Chrome Built-in AI (Gemini Nano) — runs entirely in the browser, no API key required
+- Privacy Center — offline badge, network request monitor, storage viewer, and one-click data clear
+- All data stored locally in the browser; nothing is sent to any server
+- Auto-focus on key UI elements for a smooth, keyboard-friendly experience
+- Japanese and English UI (i18n), with bilingual onboarding tour
 - Dark and Light theme support
 - Playwright E2E test suite
 
