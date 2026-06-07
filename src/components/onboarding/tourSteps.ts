@@ -1,14 +1,15 @@
+import type { ReactNode } from 'react'
 import type { Step } from 'react-joyride'
 
 interface TourStrings {
-  welcomeTitle: string
-  welcomeContent: string
-  addNodeTitle: string
-  addNodeContent: string
-  editTitle: string
-  editContent: string
-  exportTitle: string
-  exportContent: string
+  welcomeTitle: ReactNode
+  welcomeContent: ReactNode
+  addNodeTitle: ReactNode
+  addNodeContent: ReactNode
+  editTitle: ReactNode
+  editContent: ReactNode
+  exportTitle: ReactNode
+  exportContent: ReactNode
 }
 
 export function getTourSteps(s: TourStrings): Step[] {
