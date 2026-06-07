@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { SearchBar } from './SearchBar'
 import { SaveStatus } from './SaveStatus'
+import { PrivacyBadge } from '@/components/privacy/PrivacyBadge'
 import { useRef, useState } from 'react'
 import { ExportModal } from '@/components/export/ExportModal'
 import { ChromeAiImportModal } from '@/components/import/ChromeAiImportModal'
@@ -152,6 +153,8 @@ export function Toolbar() {
         </ToolbarBtn>
 
         <div style={{ flex: 1 }} />
+
+        <PrivacyBadge />
 
         <SaveStatus />
 

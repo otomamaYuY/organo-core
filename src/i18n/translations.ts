@@ -288,6 +288,42 @@ export const translations = {
   selectionNodes: { ja: 'ノード {{n}} 件', en: '{{n}} node(s)' },
   selectionEdges: { ja: 'エッジ {{n}} 件', en: '{{n}} edge(s)' },
   selectionHint: { ja: 'ドラッグで移動 / Deleteで削除', en: 'Drag to move · Delete key to remove' },
+
+  // ── Privacy Badge & Center ────────────────────────────
+  privacyBadgeOffline: { ja: 'オフライン動作中', en: 'Offline' },
+  privacyBadgeTooltip: { ja: 'プライバシー詳細を表示', en: 'View privacy details' },
+  privacyCenterTitle: { ja: 'プライバシーセンター', en: 'Privacy Center' },
+
+  // ── Privacy: Does / Doesn't ───────────────────────────
+  privacyDoesTitle: { ja: 'このアプリがすること', en: 'What this app does' },
+  privacyDoes1: { ja: 'データをブラウザ内（localStorage）にのみ保存', en: 'Store data only in your browser (localStorage)' },
+  privacyDoes2: { ja: '完全オフライン・インターネット接続不要で動作', en: 'Work fully offline — no internet connection needed' },
+  privacyDoes3: { ja: 'AI機能はデバイス内蔵のGemini Nanoのみ使用（端末外不使用）', en: 'Use only on-device Gemini Nano for AI features (no external model)' },
+  privacyDoesntTitle: { ja: 'このアプリがしないこと', en: "What this app doesn't do" },
+  privacyDoesnt1: { ja: '外部サーバーへのデータ送信', en: 'Send data to any external server' },
+  privacyDoesnt2: { ja: 'アクセス解析・トラッキング', en: 'Track or analyze your usage' },
+  privacyDoesnt3: { ja: 'アカウント登録・ログイン', en: 'Require account registration or login' },
+  privacyDoesnt4: { ja: 'APIキーや認証情報の収集', en: 'Collect API keys or credentials' },
+
+  // ── Privacy: Storage ─────────────────────────────────
+  privacyStorageTitle: { ja: 'ブラウザの保存データ', en: 'Browser Storage' },
+  privacyStorageTotal: { ja: '合計', en: 'Total' },
+  privacyStorageEmpty: { ja: '（未保存）', en: '(not saved)' },
+  privacyStorageDeleteKey: { ja: 'このデータを削除', en: 'Delete this data' },
+  privacyStorageDeleteConfirm: { ja: '削除してページを再読み込みします。よろしいですか？', en: 'This will delete the data and reload the page. Continue?' },
+  privacyKeyOrgData: { ja: '組織図データ（ノード・エッジ）', en: 'Org chart data (nodes & edges)' },
+  privacyKeyLlmSettings: { ja: 'AI設定', en: 'AI settings' },
+  privacyKeyTheme: { ja: '表示テーマ', en: 'Display theme' },
+  privacyKeyLocale: { ja: '言語設定', en: 'Language setting' },
+  privacyKeyLandingSeen: { ja: '初回案内の表示状態', en: 'Onboarding splash state' },
+  privacyKeyTourCompleted: { ja: 'チュートリアル進捗', en: 'Tutorial progress' },
+
+  // ── Privacy: Clear All ────────────────────────────────
+  privacyClearTitle: { ja: '全データを削除', en: 'Clear All Data' },
+  privacyClearDesc: { ja: 'ブラウザに保存されたすべてのデータを削除します。この操作は取り消せません。', en: 'Delete all data stored in your browser. This cannot be undone.' },
+  privacyClearBtn: { ja: '全データを削除してリロード', en: 'Delete all & reload' },
+  privacyClearConfirmBtn: { ja: '本当に削除する', en: 'Yes, delete everything' },
+  privacyClearCancelBtn: { ja: 'キャンセル', en: 'Cancel' },
 } as const satisfies Record<string, Record<Locale, string>>
 
 export type TranslationKey = keyof typeof translations

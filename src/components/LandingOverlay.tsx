@@ -3,6 +3,7 @@ import { Move, Download, ShieldCheck } from 'lucide-react'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useOrgStore } from '@/store/useOrgStore'
 import { useT } from '@/hooks/useT'
+import { PrivacyCenterModal } from '@/components/privacy/PrivacyCenterModal'
 
 const FEATURES = [
   {
@@ -28,6 +29,7 @@ export function LandingOverlay() {
   const applyAutoLayout = useOrgStore(s => s.applyAutoLayout)
   const t = useT()
   const [closing, setClosing] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   if (!showLanding && !closing) return null
 
@@ -41,6 +43,7 @@ export function LandingOverlay() {
   }
 
   return (
+    <>
     <div
       style={{
         position: 'fixed',
@@ -87,42 +90,61 @@ export function LandingOverlay() {
 
         {/* Feature cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
-          {FEATURES.map(({ Icon, ja, en }) => (
-            <div
-              key={ja.title}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 14,
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 10,
-                padding: '14px 16px',
-              }}
-            >
-              <Icon
-                size={18}
-                strokeWidth={1.5}
-                style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }}
-              />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                    {ja.title}
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--text-3)', fontStyle: 'italic' }}>
-                    {en.title}
-                  </span>
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
-                  {ja.desc}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 2 }}>
-                  {en.desc}
+          {FEATURES.map(({ Icon, ja, en }) => {
+            const isSecure = Icon === ShieldCheck
+            return (
+              <div
+                key={ja.title}
+                onClick={isSecure ? () => setShowPrivacy(true) : undefined}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 14,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 10,
+                  padding: '14px 16px',
+                  cursor: isSecure ? 'pointer' : 'default',
+                  transition: isSecure ? 'background 0.15s, border-color 0.15s' : undefined,
+                }}
+                onMouseEnter={isSecure ? (e) => {
+                  e.currentTarget.style.background = 'var(--accent-bg)'
+                  e.currentTarget.style.borderColor = 'var(--accent-border)'
+                } : undefined}
+                onMouseLeave={isSecure ? (e) => {
+                  e.currentTarget.style.background = 'var(--surface-2)'
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                } : undefined}
+              >
+                <Icon
+                  size={18}
+                  strokeWidth={1.5}
+                  style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+                      {ja.title}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-3)', fontStyle: 'italic' }}>
+                      {en.title}
+                    </span>
+                    {isSecure && (
+                      <span style={{ fontSize: 11, color: 'var(--accent)', marginLeft: 'auto' }}>
+                        詳細を見る →
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    {ja.desc}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 2 }}>
+                    {en.desc}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Footer links */}
@@ -194,5 +216,7 @@ export function LandingOverlay() {
         }
       `}</style>
     </div>
+    {showPrivacy && <PrivacyCenterModal onClose={() => setShowPrivacy(false)} />}
+    </>
   )
 }
