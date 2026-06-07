@@ -298,6 +298,7 @@ export const translations = {
   privacyNetworkSendingDesc:  { ja: 'AI画像インポートのためにOpenAI APIへ通信しています', en: 'Communicating with OpenAI API for AI image import' },
   privacyNetworkLastActivity: { ja: '最終通信', en: 'Last sent' },
   privacyNetworkNeverSent:    { ja: 'このセッションは一度も外部送信していません', en: 'No external requests sent this session' },
+  privacyNetworkTotal:        { ja: '記録済みリクエスト', en: 'Logged requests' },
   privacyCenterTitle: { ja: 'プライバシーセンター', en: 'Privacy Center' },
 
   // ── Privacy: Does / Doesn't ───────────────────────────

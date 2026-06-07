@@ -1,6 +1,5 @@
 import { llmOutputSchema, type ExtractedPerson } from './schema'
 import { SYSTEM_PROMPT, USER_PROMPT } from './prompt'
-import { useNetworkStore } from '@/store/useNetworkStore'
 
 interface OpenAICredentials {
   apiKey: string
@@ -65,8 +64,6 @@ export async function analyzeImageWithOpenAI(
     },
   ]
 
-  const { begin, end } = useNetworkStore.getState()
-  begin()
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -107,7 +104,7 @@ export async function analyzeImageWithOpenAI(
     }
 
     return result.data.persons
-  } finally {
-    end()
+  } catch (err) {
+    throw err
   }
 }
