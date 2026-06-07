@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createOrgUnitSchema, type OrgUnitFormValues } from '@/schemas/orgUnit.schema'
@@ -39,6 +39,7 @@ interface UnitEditFormProps {
 export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
   const t = useT()
   const locale = useLocaleStore(s => s.locale)
+  const unitNameInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -73,12 +74,28 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
     })
   }, [data, reset])
 
+  useEffect(() => {
+    const timer = setTimeout(() => unitNameInputRef.current?.focus(), 260)
+    return () => clearTimeout(timer)
+  }, [])
+
   const tags = useWatch({ control, name: 'tags' }) ?? []
   const hasErrors = Object.keys(errors).length > 0
 
   const reg = (name: keyof OrgUnitFormValues) => {
     const { onChange, ...rest } = register(name as any)
     return { ...rest, onChange: asciiOnChange(locale, onChange) }
+  }
+
+  // Merge react-hook-form ref with our unitNameInputRef for auto-focus
+  const { ref: unitNameFormRef, onChange: unitNameOnChange, ...unitNameRestProps } = register('unitName')
+  const unitNameProps = {
+    ...unitNameRestProps,
+    onChange: asciiOnChange(locale, unitNameOnChange),
+    ref: (el: HTMLInputElement | null) => {
+      unitNameInputRef.current = el
+      unitNameFormRef(el)
+    },
   }
 
   return (
@@ -88,7 +105,7 @@ export function UnitEditForm({ data, onSave }: UnitEditFormProps) {
     >
       <div>
         <label style={LABEL_STYLE}>{t('fieldUnitName')} *</label>
-        <input data-testid="input-unit-name" {...reg('unitName')} style={FIELD_STYLE} />
+        <input data-testid="input-unit-name" {...unitNameProps} style={FIELD_STYLE} />
         <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.unitName ? 'visible' : 'hidden' }}>
           {errors.unitName?.message ?? '\u00A0'}
         </span>

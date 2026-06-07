@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Move, Download, ShieldCheck } from 'lucide-react'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useOrgStore } from '@/store/useOrgStore'
@@ -30,6 +30,13 @@ export function LandingOverlay() {
   const t = useT()
   const [closing, setClosing] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const ctaRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!showLanding) return
+    const timer = setTimeout(() => ctaRef.current?.focus(), 650)
+    return () => clearTimeout(timer)
+  }, [showLanding])
 
   if (!showLanding && !closing) return null
 
@@ -170,7 +177,9 @@ export function LandingOverlay() {
 
         {/* CTA button */}
         <button
+          ref={ctaRef}
           onClick={handleCta}
+          className="landing-cta"
           style={{
             display: 'block',
             width: '100%',
@@ -198,6 +207,18 @@ export function LandingOverlay() {
       </div>
 
       <style>{`
+        @keyframes ctaRipple {
+          0%   { box-shadow: 0 4px 18px rgba(99,102,241,0.35), 0 0 0 0 rgba(99,102,241,0.45); }
+          70%  { box-shadow: 0 4px 18px rgba(99,102,241,0.35), 0 0 0 14px rgba(99,102,241,0); }
+          100% { box-shadow: 0 4px 18px rgba(99,102,241,0.35), 0 0 0 0 rgba(99,102,241,0); }
+        }
+        .landing-cta {
+          animation: ctaRipple 1.8s ease-out 0.65s 3 both;
+        }
+        .landing-cta:focus-visible {
+          outline: 2px solid rgba(99,102,241,0.7);
+          outline-offset: 3px;
+        }
         @keyframes landingFadeIn {
           from { opacity: 0; }
           to   { opacity: 1; }

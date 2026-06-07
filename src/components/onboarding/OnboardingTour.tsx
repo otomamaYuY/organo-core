@@ -74,7 +74,14 @@ export function OnboardingTour() {
   })
 
   const handleEvent = (data: EventData) => {
-    const { status } = data
+    const { status, type } = data
+    if (type === 'tooltip') {
+      setTimeout(() => {
+        const btn = document.querySelector<HTMLElement>('button[data-action="primary"]')
+          ?? document.querySelector<HTMLElement>('.react-joyride__button--primary')
+        btn?.focus()
+      }, 150)
+    }
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       localStorage.setItem(STORAGE_KEY, 'true')
       stopTour()

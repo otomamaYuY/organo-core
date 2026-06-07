@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createOrgPersonSchema, type OrgPersonFormValues } from '@/schemas/orgPerson.schema'
@@ -41,6 +41,7 @@ interface PersonEditFormProps {
 export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
   const t = useT()
   const locale = useLocaleStore(s => s.locale)
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const selectedNodeId = useOrgStore(s => s.selectedNodeId) ?? ''
   const suggestions = usePersonSuggestions(selectedNodeId)
 
@@ -77,6 +78,11 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     })
   }, [data, reset])
 
+  useEffect(() => {
+    const timer = setTimeout(() => nameInputRef.current?.focus(), 260)
+    return () => clearTimeout(timer)
+  }, [])
+
   const tags = useWatch({ control, name: 'tags' }) ?? []
   const hasErrors = Object.keys(errors).length > 0
 
@@ -84,6 +90,17 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
   const reg = (name: keyof OrgPersonFormValues) => {
     const { onChange, ...rest } = register(name as any)
     return { ...rest, onChange: asciiOnChange(locale, onChange) }
+  }
+
+  // Merge react-hook-form ref with our nameInputRef for auto-focus
+  const { ref: nameFormRef, onChange: nameOnChange, ...nameRestProps } = register('name')
+  const nameProps = {
+    ...nameRestProps,
+    onChange: asciiOnChange(locale, nameOnChange),
+    ref: (el: HTMLInputElement | null) => {
+      nameInputRef.current = el
+      nameFormRef(el)
+    },
   }
 
   // Email: normalize full-width chars and trim whitespace on input
@@ -119,7 +136,7 @@ export function PersonEditForm({ data, onSave }: PersonEditFormProps) {
     >
       <div>
         <label style={LABEL_STYLE}>{t('fieldName')} *</label>
-        <input data-testid="input-name" {...reg('name')} style={FIELD_STYLE} />
+        <input data-testid="input-name" {...nameProps} style={FIELD_STYLE} />
         <span style={{ color: 'var(--danger)', fontSize: 11, display: 'block', minHeight: 16, marginTop: 2, visibility: errors.name ? 'visible' : 'hidden' }}>
           {errors.name?.message ?? '\u00A0'}
         </span>
